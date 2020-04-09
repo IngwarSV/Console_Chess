@@ -13,7 +13,7 @@ class Game
 {
 private:
 	Figure* _board[BOARD_SIZE][BOARD_SIZE];
-	std::string _totalGameField[GAME_FIELD][GAME_FIELD];
+	std::wstring _totalGameField[GAME_FIELD_SIZE][GAME_FIELD_SIZE];
 	std::vector<Figure*> _whiteArmy;
 	std::vector<Figure*> _blackArmy;
 
@@ -34,12 +34,15 @@ public:
 	Game();
 	~Game();
 
-
+	
 
 
 
 
 	// TODO
+	void drawGameField();
+
+
 	void run();
 
 

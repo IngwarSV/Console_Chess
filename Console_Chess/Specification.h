@@ -1,5 +1,18 @@
 #pragma once
 
+// WR, WN, WB, WQ, WK, WB, WN, WR
+// WP, WP, WP, WP, WP, WP, WP, WP
+
+
+
+
+// BP, BP, BP, BP, BP, BP, BP, BP
+// BR, BN, BB, BQ, BK, BB, BN, BR
+
+
+
+
+
 struct Point {
 	int x, y;
 };
@@ -9,10 +22,13 @@ namespace DEF_SETT {
 	const int BOARD_SIZE = 8;
 
 	// TotalField size
-	const int GAME_FIELD = 17;
+	const int GAME_FIELD_SIZE = 17;
 	
 	// Saved games path
 	const char SAVED_GAMES_PATH[] = "SavedGames.txt";
+
+	// "a  b  c  d  e  f  g  h" string
+	const wchar_t ABCDEFGH_STRING[] = L"   a  b  c  d  e  f  g  h";
 
 
 
