@@ -1,6 +1,6 @@
 #include "Game.h"
 
-void Game::setup()
+void Game::initialSetup()
 {
 	// Setting totalGameField
 	int fieldEdge = GAME_FIELD_SIZE - 1;
@@ -9,7 +9,6 @@ void Game::setup()
 	_totalGameField[0][fieldEdge] = L"\u2557 ";
 	_totalGameField[fieldEdge][0] = L" \u255A";
 	_totalGameField[fieldEdge][fieldEdge] = L"\u255D ";
-
 
 	for (int i = 1; i < fieldEdge; ++i) {
 		if (i % 2) {
@@ -58,7 +57,6 @@ void Game::setup()
 		}
 	}
 
-
 	// Setting board
 	for (int i = 0; i < BOARD_SIZE; ++i) {
 		for (int j = 0; j < BOARD_SIZE; ++j) {
@@ -98,32 +96,24 @@ void Game::setup()
 		_whiteArmy.insert(new F_Pawn(WHITE, tempWhite));
 		_blackArmy.insert(new F_Pawn(BLACK, tempBlack));
 	}
-	
-
 }
 
 Game::Game()
 {
-	/*Figure* _board[BOARD_SIZE][BOARD_SIZE];
-	std::string _totalGameField[GAME_FIELD][GAME_FIELD];
-	std::vector<Figure*> _whiteArmy;
-	std::vector<Figure*> _blackArmy;*/
-
-	setup();
-
-	
-
-
-
-
-
-
-
+	initialSetup();
+	_halfTurn = 1;
+	_gameOver = false;
+	_moveIsAllowed = false;
+	_logMessage += L"\n";
 }
 
 Game::~Game()
 {
 
+}
+
+void Game::startMenu()
+{
 }
 
 void Game::drawGameField()
@@ -141,7 +131,6 @@ void Game::drawGameField()
 		_board[location.x][location.y] = figure;
 	}
 
-
 	// updating totalGameField considering situation on the board
 	for (int i = 1, k = 0; i < GAME_FIELD_SIZE; i += 2, k += 1) {
 		for (int j = 1, l = 0; j < GAME_FIELD_SIZE; j += 2, l += 1) {
@@ -151,26 +140,211 @@ void Game::drawGameField()
 			else {
 				_totalGameField[i][j] = L"  ";
 			}
-			
 		}
-		std::wcout << '\n';
+		std::wcout << L'\n';
 	}
 
-	std::wcout << ABCDEFGH_STRING << L'\n';
+	system("cls");
 
+	std::wcout << WHITE_STRING;
+	std::wcout << ABCDEFGH_STRING;
+	
 	for (int i = 0; i < GAME_FIELD_SIZE; ++i) {
 		for (int j = 0; j < GAME_FIELD_SIZE; ++j) {
 			std::wcout << _totalGameField[i][j];
 		}
 		std::wcout << L'\n';
 	}
-	std::wcout << ABCDEFGH_STRING << L'\n';
+	std::wcout << ABCDEFGH_STRING;
+	std::wcout << BLACK_STRING;
+
+	std::wcout << COMMANDS_STRING;
+	
+	if (_halfTurn % 2) {
+		std::wcout << WHITE_MOVE_STRING;
+	}
+	else {
+		std::wcout << BLACK_MOVE_STRING;
+	}
+
+	std::wcout << _logMessage;
+
+	std::wcout << ENTER_COMMAND_STRING;
+	
+	
+
 }
 
-void Game::run()
+void Game::input()
 {
+	std::wstring command;
+	//std::wcin.ignore(std::numeric_limits<std::streamsize>::max(), L'\n');
+	std::getline(std::wcin, command);
+
+	// Cheking "New Game", "Load Game", "Save Game" commands
+	if (command[0] == L'N' || command[0] == L'n') {
+		newGame();
+		_moveIsAllowed = true;
+		_gameOver = true;
+		return;
+	}
+	else if (command[0] == L'L' || command[0] == L'l') {
+		loadGame();
+		_moveIsAllowed = true;
+		return;
+	}
+	else if (command[0] == L'S' || command[0] == L's') {
+		saveGame();
+		_moveIsAllowed = false;
+		return;
+	}
+
+	// checking parameters for Move command, at least 5 symbols are required, e.g. "a2-a4" or "b7 b4 "
+	if (command.size() < 5) {
+		_moveIsAllowed = false;
+		
+		_logMessage = ErrorInvalidMoveParam + command + L'\n';
+		return;
+	}
+
+	// checking current position for the Figure, e.g "a1" == Point(0,0),"b3" == Point(2,1)
+	Point currentPosition;
+
+	wchar_t capitalLetter = L'A';
+	wchar_t	lowercaseLetter = L'a';
+	bool flag1 = true;
+	bool flag2 = true;
+
+	for (int i = 0; i < BOARD_SIZE; ++i) {
+		if (command[0] == capitalLetter || command[0] == lowercaseLetter) {
+			currentPosition.y = i;
+			flag1 = false;
+		}
+		
+		if (command[1] == static_cast<wchar_t>(i + 49)) {
+			currentPosition.x = i;
+			flag2 = false;
+		}
+
+		capitalLetter += 1;
+		lowercaseLetter += 1;
+	}
+
+	if (flag1 || flag2) {
+		_moveIsAllowed = false;
+		_logMessage = ErrorInvalidPos1 + command[0] + command[1] + L'\n';
+		return;
+	}
+
+	// checking new position for the Figure, e.g "a1" == Point(0,0),"b3" == Point(2,1)
+	Point newPosition;
+
+	capitalLetter = L'A';
+	lowercaseLetter = L'a';
+	flag1 = true;
+	flag2 = true;
+
+	for (int i = 0; i < BOARD_SIZE; ++i) {
+		if (command[3] == capitalLetter || command[3] == lowercaseLetter) {
+			newPosition.y = i;
+			flag1 = false;
+		}
+
+		if (command[4] == static_cast<wchar_t>(i + 49)) {
+			newPosition.x = i;
+			flag2 = false;
+		}
+
+		capitalLetter += 1;
+		lowercaseLetter += 1;
+	}
+
+	if (flag1 || flag2) {
+		_moveIsAllowed = false;
+		_logMessage = ErrorInvalidPos2 + command[3] + command[4] + L'\n';
+		return;
+	}
+
+	// forwarding currentLocation and newLocation to logic block
+	logic(currentPosition, newPosition);
+}
+
+void Game::newGame()
+{
+}
+
+void Game::saveGame()
+{
+}
+
+void Game::loadGame()
+{
+}
+
+void Game::logic(Point currentPosition, Point newPosition)
+{
+	// identifying entered position with figures' positions on the board  
+	Figure* chosenFigure = nullptr;
+
+	if (_halfTurn % 2) {
+		for (auto figure : _whiteArmy) {
+			Point figurePosition = figure->getLocation();
+
+			if (figurePosition.x == currentPosition.x && figurePosition.y == currentPosition.y) {
+				chosenFigure = figure;
+			}
+		}
+	}
+	else {
+		for (auto figure : _blackArmy) {
+			Point figurePosition = figure->getLocation();
+
+			if (figurePosition.x == currentPosition.x && figurePosition.y == currentPosition.y) {
+				chosenFigure = figure;
+			}
+		}
+	}
+
+	if (!chosenFigure) {
+		_moveIsAllowed = false;
+		std::wstring position{};
+		position += static_cast<wchar_t>(currentPosition.y + 97);
+		position += static_cast<wchar_t>(currentPosition.x + 49);
+
+		_logMessage = ErrorInvalidPos3 + position + L'\n';
+		return;
+	}
+
+	//_logMessage = chosenFigure->getFigureName() + L'\n';
+
+	
 
 
 
 
+
+
+
+}
+
+
+
+
+
+void Game::endMenu()
+{
+}
+
+void Game::gameLoop()
+{
+	startMenu();
+
+	while (!_gameOver) {
+		while (!_moveIsAllowed) {
+			drawGameField();
+			input();
+		}
+	}
+
+	endMenu();
 }

@@ -15,6 +15,7 @@ public:
 	virtual ~Figure();
 
 	//bool _whiteSide;
+	bool _firstMove;
 
 	virtual void move() = 0;
 

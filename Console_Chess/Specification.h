@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 // WR, WN, WB, WQ, WK, WB, WN, WR
 // WP, WP, WP, WP, WP, WP, WP, WP
 
@@ -39,7 +41,31 @@ namespace DEF_SETT {
 	const char SAVED_GAMES_PATH[] = "SavedGames.txt";
 
 	// "a  b  c  d  e  f  g  h" string
-	const wchar_t ABCDEFGH_STRING[] = L"   a  b  c  d  e  f  g  h";
+	const wchar_t ABCDEFGH_STRING[] = L"   a  b  c  d  e  f  g  h\n";
+
+	// "White" string
+	const wchar_t WHITE_STRING[] = L"\t   White\n";
+
+	// "Black" string
+	const wchar_t BLACK_STRING[] = L"\t   Black\n";
+
+	// "White's move" string
+	const wchar_t WHITE_MOVE_STRING[] = L"Current turn: WHITE\n";
+
+	// "Black's move" string
+	const wchar_t BLACK_MOVE_STRING[] = L"Current turn: BLACK\n";
+
+	// "Black's move" string
+	const wchar_t COMMANDS_STRING[] = L"Commands: (N)ew, (L)oad, (S)ave\n\t   Move, e.g.: <a4-a5>\n";
+
+	// "Black's move" string
+	const wchar_t ENTER_COMMAND_STRING[] = L"Enter command: ";
+
+	// Log Messages
+	const std::wstring ErrorInvalidMoveParam = L"Invalid move command (e.g.: a2-a4): ";
+	const std::wstring ErrorInvalidPos1 = L"Invalid parameter for current position of figure: ";
+	const std::wstring ErrorInvalidPos2 = L"Invalid parameter for new position of figure: ";
+	const std::wstring ErrorInvalidPos3 = L"No figure in your set on the position: ";
 
 	// Figures' starting positions
 

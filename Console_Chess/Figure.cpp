@@ -11,6 +11,7 @@ Figure::Figure(Color color, Point location, Type type)
 	this->_name += color;
 	this->_name += static_cast<wchar_t>(type);
 	this->_location = location;
+	_firstMove = true;
 	
 	/*if (_color == WHITE) {
 		_whiteSide = true;
