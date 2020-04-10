@@ -2,38 +2,25 @@
 #include <string>
 #include "Specification.h"
 
-
-
 class Figure
 {
 private:
-	std::wstring _type;
+	Color _color;
+	Type _type;
+	std::wstring _name;
 	Point _location;
-	bool whiteSide;
-
-
-
-
-
-
 
 public:
-	Figure();
-	~Figure();
+	Figure(Color color, Point location, Type type);
+	virtual ~Figure();
 
-	bool whiteSide;
+	//bool _whiteSide;
 
 	virtual void move() = 0;
 
-	const std::wstring& getType() const;
+	const Color getColor() const;
+	const std::wstring& getFigureName() const;
 	const Point getLocation() const;
+
 	void setLocation(int x, int y);
-
-
-
-
-
-
-
 };
-

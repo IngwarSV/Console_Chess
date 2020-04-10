@@ -66,15 +66,39 @@ void Game::setup()
 		}
 	}
 
-	// Deploying figures on board
+	// Creating and deploying figures on the board
 
+	// White Army
+	_whiteArmy.insert(new F_King(WHITE, WK_INIT_POS));
+	_whiteArmy.insert(new F_Queen(WHITE, WQ_INIT_POS));
+	_whiteArmy.insert(new F_Bishop(WHITE, WB_INIT_POS1));
+	_whiteArmy.insert(new F_Bishop(WHITE, WB_INIT_POS2));
+	_whiteArmy.insert(new F_Knight(WHITE, WN_INIT_POS1));
+	_whiteArmy.insert(new F_Knight(WHITE, WN_INIT_POS2));
+	_whiteArmy.insert(new F_Rook(WHITE, WR_INIT_POS1));
+	_whiteArmy.insert(new F_Rook(WHITE, WR_INIT_POS2));
+
+	// Black Army
+	_blackArmy.insert(new F_King(BLACK, BK_INIT_POS));
+	_blackArmy.insert(new F_Queen(BLACK, BQ_INIT_POS));
+	_blackArmy.insert(new F_Bishop(BLACK, BB_INIT_POS1));
+	_blackArmy.insert(new F_Bishop(BLACK, BB_INIT_POS2));
+	_blackArmy.insert(new F_Knight(BLACK, BN_INIT_POS1));
+	_blackArmy.insert(new F_Knight(BLACK, BN_INIT_POS2));
+	_blackArmy.insert(new F_Rook(BLACK, BR_INIT_POS1));
+	_blackArmy.insert(new F_Rook(BLACK, BR_INIT_POS2));
+
+	// Pawns
+	for (int i = 0; i < BOARD_SIZE; ++i) {
+		Point tempWhite = WP_INIT_POS1;
+		Point tempBlack = BP_INIT_POS1;
+		tempWhite.y += i;
+		tempBlack.y += i;
+
+		_whiteArmy.insert(new F_Pawn(WHITE, tempWhite));
+		_blackArmy.insert(new F_Pawn(BLACK, tempBlack));
+	}
 	
-	
-
-
-
-
-
 
 }
 
@@ -87,7 +111,7 @@ Game::Game()
 
 	setup();
 
-
+	
 
 
 
@@ -104,8 +128,22 @@ Game::~Game()
 
 void Game::drawGameField()
 {
+	// updating board's situation considering figures' positions
+	for (auto figure : _whiteArmy) {
+		Point location = figure->getLocation();
+
+		_board[location.x][location.y] = figure;
+	}
+
+	for (Figure* figure : _blackArmy) {
+		Point location = figure->getLocation();
+
+		_board[location.x][location.y] = figure;
+	}
+
+
 	// updating totalGameField considering situation on the board
-	/*for (int i = 1, k = 0; i < GAME_FIELD_SIZE; i += 2, k += 1) {
+	for (int i = 1, k = 0; i < GAME_FIELD_SIZE; i += 2, k += 1) {
 		for (int j = 1, l = 0; j < GAME_FIELD_SIZE; j += 2, l += 1) {
 			if (_board[k][l]) {
 				_totalGameField[i][j] = _board[k][l]->getFigureName();
@@ -116,14 +154,10 @@ void Game::drawGameField()
 			
 		}
 		std::wcout << '\n';
-	}*/
-
-
-
-
-
+	}
 
 	std::wcout << ABCDEFGH_STRING << L'\n';
+
 	for (int i = 0; i < GAME_FIELD_SIZE; ++i) {
 		for (int j = 0; j < GAME_FIELD_SIZE; ++j) {
 			std::wcout << _totalGameField[i][j];

@@ -4,23 +4,35 @@
 
 
 
-Figure::Figure()
+Figure::Figure(Color color, Point location, Type type)
 {
-
-
-
-
-
-
+	this->_color = color;
+	this->_type = type;
+	this->_name += color;
+	this->_name += static_cast<wchar_t>(type);
+	this->_location = location;
+	
+	/*if (_color == WHITE) {
+		_whiteSide = true;
+	}
+	else {
+		_whiteSide = false;
+	}*/
+	
 }
 
 Figure::~Figure()
 {
 }
 
-const std::wstring& Figure::getType() const
+const Color Figure::getColor() const
 {
-	return _type;
+	return _color;
+}
+
+const std::wstring& Figure::getFigureName() const
+{
+	return _name;
 }
 
 const Point Figure::getLocation() const

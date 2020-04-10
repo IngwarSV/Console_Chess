@@ -2,10 +2,11 @@
 
 #include <iostream>
 #include <string>
-#include <vector>
+#include <set>
 
 #include "Specification.h"
 #include "Figure.h"
+#include "Units.h"
 
 using namespace DEF_SETT;
 
@@ -14,8 +15,8 @@ class Game
 private:
 	Figure* _board[BOARD_SIZE][BOARD_SIZE];
 	std::wstring _totalGameField[GAME_FIELD_SIZE][GAME_FIELD_SIZE];
-	std::vector<Figure*> _whiteArmy;
-	std::vector<Figure*> _blackArmy;
+	std::set<Figure*> _whiteArmy;
+	std::set<Figure*> _blackArmy;
 
 
 
