@@ -51,7 +51,6 @@ const Point Figure::getLocation() const
 
 void Figure::setLocation(Point point)
 {
-	
 	_location.x = point.x;
 	_location.y = point.y;
 }

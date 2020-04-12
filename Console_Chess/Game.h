@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 #include <set>
+#include <bitset>
 
 #include "Specification.h"
 #include "Figure.h"
@@ -14,22 +15,32 @@ class Game
 {
 private:
 	// attributes
-	Figure*** _board = nullptr;
+	Figure*** _board;
 	std::wstring **_totalGameField;
-	/*Figure* _board[BOARD_SIZE][BOARD_SIZE];
-	std::wstring _totalGameField[GAME_FIELD_SIZE][GAME_FIELD_SIZE];*/
-	std::set<Figure*> _whiteArmy;
-	std::set<Figure*> _blackArmy;
+	
+	//// sets for "White" and "Black" armies and pointers on them
+	std::set<Figure*>* _whiteArmy;
+	std::set<Figure*>* _blackArmy;
+	std::set<Figure*>* _currentArmy;
+	std::set<Figure*>* _enemyArmy;
 
-	// Kings need special attitude
-	Figure* _WKing = nullptr;
-	Figure* _BKing = nullptr;
+	//// bitsets 0111 1111 for 8 figures (B, B, N, N, R, R, Q, Q) in army 
+	//// including 1 place for promoted Queen
+	std::bitset<BOARD_SIZE> _bit_whiteArmy{ 127 };
+	std::bitset<BOARD_SIZE> _bit_blackArmy{ 127 };
+
+	//pawns quantity (for draw calculating)
+	int _pawnQuantity;
+
+	//// Kings need special attitude
+	Figure* _WKing;
+	Figure* _BKing;
 
 	std::wstring _command{};
 	int _halfTurn;
 	bool _CHECK;
 	bool _gameOver;
-	bool _moveIsAllowed;
+	bool _moveCompleted;
 
 	std::wstring _logMessage{};
 
@@ -42,9 +53,11 @@ private:
 
 	void logicBlock1();
 
-		void isDraw();
+		bool isDraw();
 
-		void isCheckmate();
+		bool isCheck();
+
+		bool isCheckmate();
 
 	void input();
 
@@ -58,9 +71,13 @@ private:
 
 		bool Castling(Figure* king, Point currentPosition, Point newPosition);
 
-		bool isKingInDanger();
+		bool isKingInDanger(Figure* figureToMove, Point currentPosition, Point newPosition);
+
+		void promotion(Figure* figureToMove, Point newPosition);
 
 		void move();
+
+		void deletingFigure(Figure* enemyFigure);
 
 
 	void endMenu();

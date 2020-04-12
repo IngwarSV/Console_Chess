@@ -41,6 +41,9 @@ namespace DEF_SETT {
 	// TotalField size
 	const int GAME_FIELD_SIZE = 17;
 	
+	//pawns quantity (for draw calculating)
+	const int PAWN_QUANTITY = 16;
+	
 	// Saved games path
 	const char SAVED_GAMES_PATH[] = "SavedGames.txt";
 
@@ -60,19 +63,29 @@ namespace DEF_SETT {
 	const wchar_t BLACK_MOVE_STRING[] = L"Current turn: BLACK\n";
 
 	// "Black's move" string
-	const wchar_t COMMANDS_STRING[] = L"Commands: (N)ew, (L)oad, (S)ave\n\t   Move, e.g.: <a4-a5>\n";
+	const wchar_t COMMANDS_STRING[] = L"Commands: (N)ew, (L)oad, (S)ave,\n\t   Move e.g.: <a4-a5>\n";
 
 	// "Black's move" string
 	const wchar_t ENTER_COMMAND_STRING[] = L"Enter command: ";
 
 	// Log Messages
-	const std::wstring ErrorInvalidMoveParam = L"Invalid move command (e.g.: a2-a4): ";
+	const std::wstring ErrorInvalidMoveParam = L"Invalid move command, enter e.g.: (a2-a4): ";
 	const std::wstring ErrorInvalidPos1 = L"Invalid parameter for current position of figure: ";
 	const std::wstring ErrorInvalidPos2 = L"Invalid parameter for new position of figure: ";
 	const std::wstring ErrorInvalidPos3 = L"No figure in your set on the position: ";
+	const std::wstring ErrorCastling = L"Can't perform castling: ";
+	const std::wstring CastlingPerfomed = L"Castling performed: ";
 	const std::wstring ErrorMoveIsIllegal = L"Figure can't move: ";
 	const std::wstring PreviousMove = L"Previous move: ";
 	const std::wstring ErrorKingIsInDanger = L"Your King is in danger if: ";
+	const std::wstring ChoosePromotionString = L"Choose promotion (Q), (B), (N), (R)\n";
+	const std::wstring ErrorPromotionType1 = L"Error type of figure: ";
+	const std::wstring ErrorPromotionType2 = L"\nChoose promotion (Q), (B), (N), (R)\n";
+	const std::wstring DrawStalemateString = L"DRAW: stalemate\n";
+	const std::wstring impossibleCheckmate1 = L"DRAW: two kings left\n";
+	const std::wstring impossibleCheckmate2 = L"DRAW: king with/without bishop versus king\nand bishop(bishops) on the same color\n";
+	const std::wstring impossibleCheckmate3 = L"DRAW: king and knight versus king\n";
+
 
 	// Figures' starting positions
 
@@ -82,9 +95,8 @@ namespace DEF_SETT {
 	const Point WB_INIT_POS1{ 0,2 };
 	const Point WQ_INIT_POS{ 0,3 };
 	
-	const Point WK_INIT_POS{ 3,5 };
-	//const Point WB_INIT_POS2{ 0,5 };
-	const Point WB_INIT_POS2{ 4,3 };
+	const Point WK_INIT_POS{ 0,4 };
+	const Point WB_INIT_POS2{ 0,5 };
 	const Point WN_INIT_POS2{ 0,6 };
 	const Point WR_INIT_POS2{ 0,7 };
 	const Point WP_INIT_POS1{ 1,0 };
@@ -92,17 +104,27 @@ namespace DEF_SETT {
 	// Black Army
 	const Point BR_INIT_POS1{ 7,0 };
 	const Point BN_INIT_POS1{ 7,1 };
-	//const Point BB_INIT_POS1{ 7,2 };
-	const Point BB_INIT_POS1{ 5,2 };
+	const Point BB_INIT_POS1{ 7,2 };
 	//const Point BQ_INIT_POS{ 7,3 };
-	const Point BQ_INIT_POS{ 5,4 };
+	const Point BQ_INIT_POS{ 2,1 };
 	const Point BK_INIT_POS{ 7,4 };
 	const Point BB_INIT_POS2{ 7,5 };
 	const Point BN_INIT_POS2{ 7,6 };
 	const Point BR_INIT_POS2{ 7,7 };
 	const Point BP_INIT_POS1{ 6,0 };
 
+
+	// serial number of bits for 8 figures: N, N, B, B, R, R, Q1, Q2
+	const int bit_F_Knight1 = 0;
+	const int bit_F_Knight2 = 1;
+	const int bit_F_Bishop1 = 2;
+	const int bit_F_Bishop2 = 3;
+	const int bit_F_Rook1 = 4;
+	const int bit_F_Rook2 = 5;
+	const int bit_F_Queen1 = 6;
+	const int bit_F_Queen2 = 7;
 }
+
 
 
 
