@@ -1,9 +1,5 @@
 #include "Figure.h"
 
-
-
-
-
 Figure::Figure(Color color, Point location, Type type)
 {
 	this->_color = color;
@@ -11,22 +7,14 @@ Figure::Figure(Color color, Point location, Type type)
 	this->_name += static_cast<wchar_t>(color);
 	this->_name += static_cast<wchar_t>(type);
 	this->_location = location;
+	this->_firstMove = true;
 
 	this->_possibleMoves = new std::vector<Point>();
-
-	_firstMove = true;
-	
-	/*if (_color == WHITE) {
-		_whiteSide = true;
-	}
-	else {
-		_whiteSide = false;
-	}*/
-	
 }
 
 Figure::~Figure()
 {
+	delete _possibleMoves;
 }
 
 const Color Figure::getColor() const

@@ -15,8 +15,12 @@ class Game
 {
 private:
 	// attributes
-	Figure*** _board;
-	std::wstring **_totalGameField;
+	
+	//// Board[SIZE][SIZE], BOARD_SIZE = 8;
+	Figure*** _board; 
+
+	//// TotalGameField[SIZE][SIZE], GAME_FIELD_SIZE = 17;
+	std::wstring **_totalGameField; 
 	
 	//// sets for "White" and "Black" armies and pointers on them
 	std::set<Figure*>* _whiteArmy;
@@ -24,74 +28,72 @@ private:
 	std::set<Figure*>* _currentArmy;
 	std::set<Figure*>* _enemyArmy;
 
-	//// bitsets 0111 1111 for 8 figures (B, B, N, N, R, R, Q, Q) in army 
-	//// including 1 place for promoted Queen
-	std::bitset<BOARD_SIZE> _bit_whiteArmy{ 127 };
+	//// bitsets 0111 1111 for 8 figures (B1, B2, N1, N2, R1, R2, Q1, Q2) in army 
+	std::bitset<BOARD_SIZE> _bit_whiteArmy{ 127 };// including 1 place for promoted Queen 
 	std::bitset<BOARD_SIZE> _bit_blackArmy{ 127 };
 
-	//pawns quantity (for draw calculating)
-	int _pawnQuantity;
+	int _pawnQuantity; //pawns quantity (for draw calculatings)
 
-	//// Kings need special attitude
+	//// pointers for kings for quick access
 	Figure* _WKing;
 	Figure* _BKing;
+	Figure* _activeKing;
 
-	std::wstring _command{};
-	int _halfTurn;
+	// for "en passant" actions 
+	Point _firstEnPassantPoint;
+	Figure* _enPassantFigure;
+
+	int _halfTurn; // game turns * 2
 	bool _CHECK;
 	bool _gameOver;
 	bool _moveCompleted;
 
-	std::wstring _logMessage{};
+	std::wstring _command; // for command line instructions
+	std::wstring _logMessage{}; // for game notifications
 
 	// methods
 	void initialSetup();
 
-	void startMenu();
-
 	void drawGameField();
 
-	void logicBlock1();
+	////logicBlock1:
 
-		bool isDraw();
+	bool isCheck();
 
-		bool isCheck();
+	bool isCheckmate();
 
-		bool isCheckmate();
+	bool isDraw();
 
-	void input();
+	
+	void input(); // handling instructions
 
+	////logicBlock2:
 	void newGame();
 
-	void saveGame();
+	void saveGame(); // need to be implemented
 
-	void loadGame();
+	void loadGame(); // need to be implemented
 
-	void logic(Point currentPosition, Point newPosition);
+	////logicBlock3:
+	void mainLogic(Point currentPosition, Point newPosition);
 
-		bool Castling(Figure* king, Point currentPosition, Point newPosition);
+	bool castling(Figure* king, Point currentPosition, Point newPosition);
 
-		bool isKingInDanger(Figure* figureToMove, Point currentPosition, Point newPosition);
+	bool enPassant(Figure* figureToMove, Point currentPosition, Point newPosition);
 
-		void promotion(Figure* figureToMove, Point newPosition);
+	//// checking if move cause check for the king
+	bool isKingInDanger(Figure* figureToMove, Point currentPosition, Point newPosition);
 
-		void move();
+	void promotion(Figure* figureToMove, Point newPosition);
 
-		void deletingFigure(Figure* enemyFigure);
-
-
-	void endMenu();
+	void deletingFigure(Figure* enemyFigure);
 
 
 public:
 	Game();
 	~Game();
 
-	// attributes
-	
-
 	// methods
 	void gameLoop();
-
 };
 

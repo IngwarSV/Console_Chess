@@ -2,16 +2,6 @@
 
 #include <string>
 
-// WR, WN, WB, WQ, WK, WB, WN, WR
-// WP, WP, WP, WP, WP, WP, WP, WP
-
-
-
-
-// BP, BP, BP, BP, BP, BP, BP, BP
-// BR, BN, BB, BQ, BK, BB, BN, BR
-
-
 struct Point {
 	int x = 0, y = 0;
 
@@ -73,40 +63,42 @@ namespace DEF_SETT {
 	const std::wstring ErrorInvalidPos1 = L"Invalid parameter for current position of figure: ";
 	const std::wstring ErrorInvalidPos2 = L"Invalid parameter for new position of figure: ";
 	const std::wstring ErrorInvalidPos3 = L"No figure in your set on the position: ";
-	const std::wstring ErrorCastling = L"Can't perform castling: ";
-	const std::wstring CastlingPerfomed = L"Castling performed: ";
+	const std::wstring ErrorCastlingString = L"Can't execute castling: ";
+	const std::wstring CastlingPerfomed = L"Castling executed: ";
+	const std::wstring ErrorenPassantString = L"Can't execute enPassant: ";
+	const std::wstring enPassantPerformedString = L"enPassant executed: ";
 	const std::wstring ErrorMoveIsIllegal = L"Figure can't move: ";
-	const std::wstring PreviousMove = L"Previous move: ";
+	const std::wstring PreviousMoveString = L"Previous move: ";
 	const std::wstring ErrorKingIsInDanger = L"Your King is in danger if: ";
 	const std::wstring ChoosePromotionString = L"Choose promotion (Q), (B), (N), (R)\n";
 	const std::wstring ErrorPromotionType1 = L"Error type of figure: ";
 	const std::wstring ErrorPromotionType2 = L"\nChoose promotion (Q), (B), (N), (R)\n";
 	const std::wstring DrawStalemateString = L"DRAW: stalemate\n";
 	const std::wstring impossibleCheckmate1 = L"DRAW: two kings left\n";
-	const std::wstring impossibleCheckmate2 = L"DRAW: king with/without bishop versus king\nand bishop(bishops) on the same color\n";
+	const std::wstring impossibleCheckmate2 = L"DRAW: king with/without bishop versus king and\nbishop(bishops) on the same color\n";
 	const std::wstring impossibleCheckmate3 = L"DRAW: king and knight versus king\n";
+	const std::wstring ErrorCheckString = L"Warning: C H E C K!\n";
+	const std::wstring ErrorCheckmateString = L"CHECKMATE: G A M E  O V E R!\n";
 
 
 	// Figures' starting positions
 
-	// White Army
+	//// White Army
 	const Point WR_INIT_POS1{ 0,0 };
 	const Point WN_INIT_POS1{ 0,1 };
 	const Point WB_INIT_POS1{ 0,2 };
 	const Point WQ_INIT_POS{ 0,3 };
-	
 	const Point WK_INIT_POS{ 0,4 };
 	const Point WB_INIT_POS2{ 0,5 };
 	const Point WN_INIT_POS2{ 0,6 };
 	const Point WR_INIT_POS2{ 0,7 };
 	const Point WP_INIT_POS1{ 1,0 };
 
-	// Black Army
+	//// Black Army
 	const Point BR_INIT_POS1{ 7,0 };
 	const Point BN_INIT_POS1{ 7,1 };
 	const Point BB_INIT_POS1{ 7,2 };
-	//const Point BQ_INIT_POS{ 7,3 };
-	const Point BQ_INIT_POS{ 2,1 };
+	const Point BQ_INIT_POS{ 7,3 };
 	const Point BK_INIT_POS{ 7,4 };
 	const Point BB_INIT_POS2{ 7,5 };
 	const Point BN_INIT_POS2{ 7,6 };
@@ -114,7 +106,7 @@ namespace DEF_SETT {
 	const Point BP_INIT_POS1{ 6,0 };
 
 
-	// serial number of bits for 8 figures: N, N, B, B, R, R, Q1, Q2
+	// serial number of bits for 8 figures: N1, N2, B1, B2, R1, R2, Q1, Q2 in bitsets
 	const int bit_F_Knight1 = 0;
 	const int bit_F_Knight2 = 1;
 	const int bit_F_Bishop1 = 2;

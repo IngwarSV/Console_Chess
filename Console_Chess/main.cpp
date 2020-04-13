@@ -7,16 +7,11 @@
 #include "Game.h"
 
 
-
-
 int main() {
-
 	_setmode(_fileno(stdout), _O_WTEXT);
 
 	Game game;
 	game.gameLoop();
 
-
-	
 	return 0;
 }

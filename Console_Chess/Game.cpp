@@ -2,7 +2,7 @@
 
 void Game::initialSetup()
 {
-	// Setting totalGameField
+	// Setting totalGameField 17 x 17
 	int fieldEdge = GAME_FIELD_SIZE - 1;
 
 	_totalGameField[0][0] = L" \u2554";
@@ -64,20 +64,21 @@ void Game::initialSetup()
 		}
 	}
 
-	// Creating and deploying figures on the board
+	// Creating armies with figures 
 
-	// White Army
+	//// White Army
+	_WKing = new F_King(Color::WHITE, WK_INIT_POS);
 	_whiteArmy->insert(_WKing);
-	//_whiteArmy->insert(new F_Queen(Color::WHITE, WQ_INIT_POS));
-	//_whiteArmy->insert(new F_Bishop(Color::WHITE, WB_INIT_POS1));
-	//_whiteArmy->insert(new F_Bishop(Color::WHITE, WB_INIT_POS2));
-	//_whiteArmy->insert(new F_Knight(Color::WHITE, WN_INIT_POS1));
-	//_whiteArmy->insert(new F_Knight(Color::WHITE, WN_INIT_POS2));
+	_whiteArmy->insert(new F_Queen(Color::WHITE, WQ_INIT_POS));
+	_whiteArmy->insert(new F_Bishop(Color::WHITE, WB_INIT_POS1));
+	_whiteArmy->insert(new F_Bishop(Color::WHITE, WB_INIT_POS2));
+	_whiteArmy->insert(new F_Knight(Color::WHITE, WN_INIT_POS1));
+	_whiteArmy->insert(new F_Knight(Color::WHITE, WN_INIT_POS2));
 	_whiteArmy->insert(new F_Rook(Color::WHITE, WR_INIT_POS1));
 	_whiteArmy->insert(new F_Rook(Color::WHITE, WR_INIT_POS2));
 
-	// Black Army
-	
+	//// Black Army
+	_BKing = new F_King(Color::BLACK, BK_INIT_POS);
 	_blackArmy->insert(_BKing);
 	_blackArmy->insert(new F_Queen(Color::BLACK, BQ_INIT_POS));
 	_blackArmy->insert(new F_Bishop(Color::BLACK, BB_INIT_POS1));
@@ -87,8 +88,10 @@ void Game::initialSetup()
 	_blackArmy->insert(new F_Rook(Color::BLACK, BR_INIT_POS1));
 	_blackArmy->insert(new F_Rook(Color::BLACK, BR_INIT_POS2));
 
-	// Pawns
-	/*for (int i = 0; i < BOARD_SIZE; ++i) {
+	//// Pawns
+	_pawnQuantity = PAWN_QUANTITY;
+
+	for (int i = 0; i < BOARD_SIZE; ++i) {
 		Point tempWhite = WP_INIT_POS1;
 		Point tempBlack = BP_INIT_POS1;
 		tempWhite.y += i;
@@ -96,7 +99,7 @@ void Game::initialSetup()
 
 		_whiteArmy->insert(new F_Pawn(Color::WHITE, tempWhite));
 		_blackArmy->insert(new F_Pawn(Color::BLACK, tempBlack));
-	}*/
+	}
 
 	// updating board's situation considering figures' positions
 	for (auto figure : *_whiteArmy) {
@@ -110,38 +113,43 @@ void Game::initialSetup()
 
 		_board[location.x][location.y] = figure;
 	}
-}
 
-Game::Game()
-{
-	_board = new Figure** [BOARD_SIZE];
-	for (int i = 0; i < BOARD_SIZE; ++i) {
-		_board[i] = new Figure* [BOARD_SIZE];
-	}
-
-	_totalGameField = new std::wstring*[GAME_FIELD_SIZE];
-	for (int i = 0; i < GAME_FIELD_SIZE; ++i) {
-		_totalGameField[i] = new std::wstring[GAME_FIELD_SIZE];
-	}
-
-	_whiteArmy = new std::set<Figure*>();
-	_blackArmy = new std::set<Figure*>();
+	// initializing rest of the attributes
 	_currentArmy = _whiteArmy;
 	_enemyArmy = _blackArmy;
 
-	_pawnQuantity = PAWN_QUANTITY;
-
-	_WKing = new F_King(Color::WHITE, WK_INIT_POS);
-	_BKing = new F_King(Color::BLACK, BK_INIT_POS);
-
-	initialSetup();
-
+	_enPassantFigure = nullptr;
 	_halfTurn = 0;
 	_CHECK = false;
 	_gameOver = false;
 	_moveCompleted = false;
+
+	_command = L"\n";
 	_logMessage = L"\n";
 }
+
+
+Game::Game()
+{
+	// creating Board[8][8]
+	this->_board = new Figure** [BOARD_SIZE];
+	for (int i = 0; i < BOARD_SIZE; ++i) {
+		_board[i] = new Figure* [BOARD_SIZE];
+	}
+
+	// creating totalGameField[17][17]
+	this->_totalGameField = new std::wstring*[GAME_FIELD_SIZE];
+	for (int i = 0; i < GAME_FIELD_SIZE; ++i) {
+		_totalGameField[i] = new std::wstring[GAME_FIELD_SIZE];
+	}
+
+	// creating white and black sets
+	this->_whiteArmy = new std::set<Figure*>();
+	this->_blackArmy = new std::set<Figure*>();
+	
+	initialSetup();
+}
+
 
 Game::~Game()
 {
@@ -157,13 +165,18 @@ Game::~Game()
 	}
 	delete[] _totalGameField;
 
-	// delete Figures* in Armies
+	// deleting Armies
+	for (auto figure : *_whiteArmy) {
+		delete figure;
+	}
+	delete _whiteArmy;
 
+	for (auto figure : *_blackArmy) {
+		delete figure;
+	}
+	delete _blackArmy;
 }
 
-void Game::startMenu()
-{
-}
 
 void Game::drawGameField()
 {
@@ -182,6 +195,7 @@ void Game::drawGameField()
 
 	system("cls");
 
+	// drawing totalGameField
 	std::wcout << WHITE_STRING;
 	std::wcout << ABCDEFGH_STRING;
 	
@@ -191,6 +205,7 @@ void Game::drawGameField()
 		}
 		std::wcout << L'\n';
 	}
+
 	std::wcout << ABCDEFGH_STRING;
 	std::wcout << BLACK_STRING;
 
@@ -203,24 +218,93 @@ void Game::drawGameField()
 		std::wcout << BLACK_MOVE_STRING;
 	}
 
+	// showing notifications
 	std::wcout << _logMessage;
 
 }
 
+
+bool Game::isCheck()
+{
+	Point kingPosition = _activeKing->getLocation();
+
+	for (auto enemyFigure : *_enemyArmy) {
+		auto v_possibleMoves = enemyFigure->getPossibleMoves(_board);
+
+		for (auto possiblePosition : *v_possibleMoves) {
+			if (kingPosition == possiblePosition) {
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+
+bool Game::isCheckmate()
+{
+	Point kingLocation = _activeKing->getLocation();
+	
+	// checking if king can escape check by himself
+	auto v_possibleMoves = _activeKing->getPossibleMoves(_board);
+
+	for (auto possiblePosition : *v_possibleMoves) {
+		if (!isKingInDanger(_activeKing, kingLocation, possiblePosition)) {
+			_logMessage += ErrorCheckString;
+			return false;
+		}
+	}
+	
+	// checking if army can protect their king 
+	// (test using king's moves is repeating, but mostly this second check won't be performed)
+
+	for (auto figure : *_currentArmy) {
+		auto v_possibleMoves = figure->getPossibleMoves(_board);
+		Point figureLocation = figure->getLocation();
+
+		for (auto possiblePosition : *v_possibleMoves) {
+			if (!isKingInDanger(figure, figureLocation, possiblePosition)) {
+				_logMessage += ErrorCheckString;
+				return false;
+			}
+		}
+
+		//// checking if enPassant can be performed to protect the king
+		if (figure->getType() == Type::PAWN && _enPassantFigure) {
+			if (enPassant(figure, figure->getLocation(), _firstEnPassantPoint)) {
+				_logMessage += ErrorCheckString;
+				return false;
+			}
+		}
+	}
+
+	// Game Over
+	_logMessage += ErrorCheckmateString;
+	return true;
+}
+
+
 bool Game::isDraw()
 {
-	/*if (_CHECK) {
-		return false;
-	}*/
-
 	// checking stalemate
 	bool hasLegalMove = false;
 
 	for (auto figure : *_currentArmy) {
 		auto v_possibleMoves = figure->getPossibleMoves(_board);
+
 		if (v_possibleMoves->size()) {
 			hasLegalMove = true;
 			break;
+		}
+
+		// checking for enPassant move
+		if (figure->getType() == Type::PAWN && _enPassantFigure) {
+			if (enPassant(figure, figure->getLocation(), _firstEnPassantPoint)) {
+				_logMessage += ErrorCheckString;
+				hasLegalMove = true;
+				break;
+			}
 		}
 	}
 
@@ -229,26 +313,27 @@ bool Game::isDraw()
 		return true;
 	}
 
-	// checking Impossibility of checkmate
+	// checking impossibility of checkmate
 	std::bitset<BOARD_SIZE> _bit_temp = _bit_whiteArmy | _bit_blackArmy;
 
-	if (!_pawnQuantity) {
+	//// cheking for pawns
+	if (_pawnQuantity > 0) {
 		return false;
 	}
 
-	// // two kings left
+	//// two kings left (there is no bit for kings in the bitsets)
 	if (!_bit_temp.to_ulong()) {
 		_logMessage = impossibleCheckmate1;
 		return true;
 	}
 
-	// // king with/without bishop versus king and bishop(bishops) on the same color
+	//// king with/without bishop versus king and bishop(bishops) on the same color
 	if (_bit_temp.to_ulong() == 4Ul || _bit_temp.to_ulong() == 8Ul) {
 		_logMessage = impossibleCheckmate2;
 		return true;
 	}
 
-	// // king and knight versus king
+	//// king and knight versus king
 	if (_bit_temp.to_ulong() == 1Ul || _bit_temp.to_ulong() == 2Ul) {
 		_logMessage = impossibleCheckmate3;
 		return true;
@@ -257,30 +342,6 @@ bool Game::isDraw()
 	return false;
 }
 
-bool Game::isCheck()
-{
-	Point kingPosition;
-
-	if (_halfTurn % 2) {
-		kingPosition = _WKing->getLocation();
-	}
-	else {
-		kingPosition = _BKing->getLocation();
-	}
-
-	for (auto enemyFigure : *_enemyArmy) {
-			auto v_possibleMoves = enemyFigure->getPossibleMoves(_board);
-
-			for (auto possiblePosition : *v_possibleMoves) {
-				if (kingPosition == possiblePosition) {
-					_CHECK = true;
-					return true;
-				}
-			}
-	}
-
-	return false;
-}
 
 void Game::input()
 {
@@ -291,7 +352,6 @@ void Game::input()
 	if (_command[0] == L'N' || _command[0] == L'n') {
 		newGame();
 		_moveCompleted = true;
-		_gameOver = true;
 		return;
 	}
 	else if (_command[0] == L'L' || _command[0] == L'l') {
@@ -305,7 +365,7 @@ void Game::input()
 		return;
 	}
 
-	// checking parameters for Move command, at least 5 symbols are required, e.g. "a2-a4" or "b7 b4 "
+	// checking parameters for Move instruction, at least 5 symbols are required, e.g. "a2-a4", "b7 b4 "
 	if (_command.size() < 5) {
 		_moveCompleted = false;
 		
@@ -313,7 +373,8 @@ void Game::input()
 		return;
 	}
 
-	// checking current position for the Figure, e.g "a1" == Point(0,0),"b3" == Point(2,1)
+	// checking and converting the entered current position for the figure, 
+	// e.g "a1" == Point(0,0),"b3" == Point(2,1)
 	Point currentPosition;
 
 	wchar_t capitalLetter = L'A';
@@ -331,7 +392,6 @@ void Game::input()
 			currentPosition.x = i;
 			flag2 = false;
 		}
-
 		capitalLetter += 1;
 		lowercaseLetter += 1;
 	}
@@ -342,7 +402,8 @@ void Game::input()
 		return;
 	}
 
-	// checking new position for the Figure, e.g "a1" == Point(0,0),"b3" == Point(2,1)
+	// checking and converting the entered new position for the figure, 
+	// e.g "a1" == Point(0,0),"b3" == Point(2,1)
 	Point newPosition;
 
 	capitalLetter = L'A';
@@ -360,7 +421,6 @@ void Game::input()
 			newPosition.x = i;
 			flag2 = false;
 		}
-
 		capitalLetter += 1;
 		lowercaseLetter += 1;
 	}
@@ -371,25 +431,42 @@ void Game::input()
 		return;
 	}
 
-	// forwarding currentLocation and newLocation to logic block
-	logic(currentPosition, newPosition);
-
-
+	// forwarding currentLocation and newLocation to next logic block
+	mainLogic(currentPosition, newPosition);
 }
+
 
 void Game::newGame()
 {
+	// deleting current figures
+	for (auto figure : *_whiteArmy) {
+		delete figure;
+	}
+	_whiteArmy->clear();
+
+	for (auto figure : *_blackArmy) {
+		delete figure;
+	}
+	_blackArmy->clear();
+
+	// launching initial setup
+	initialSetup();
 }
+
 
 void Game::saveGame()
 {
+	// need to be implemented
 }
+
 
 void Game::loadGame()
 {
+	//need to be implemented
 }
 
-void Game::logic(Point currentPosition, Point newPosition)
+
+void Game::mainLogic(Point currentPosition, Point newPosition)
 {
 	// identifying entered position with figures' positions on the board  
 	Figure* figureToMove = nullptr;
@@ -409,23 +486,20 @@ void Game::logic(Point currentPosition, Point newPosition)
 		return;
 	}
 
-	
-	//checking for Castling
+	//castling checking, execution if needed
 	if (figureToMove->_firstMove) {
 		if (figureToMove->getType() == Type::KING) {
 			if (newPosition == Point{ figureToMove->getLocation().x, 2 } ||
 				newPosition == Point{ figureToMove->getLocation().x, 6 }) {
-				bool moveIsLegal = Castling(figureToMove, currentPosition, newPosition);
+				bool moveIsLegal = castling(figureToMove, currentPosition, newPosition);
 				
 				if (!moveIsLegal) {
 					_moveCompleted = false;
-
-					_logMessage = ErrorCastling + _command.substr(0, 5) + L'\n';
+					_logMessage = ErrorCastlingString + _command.substr(0, 5) + L'\n';
 					return;
 				}
 				else {
 					_moveCompleted = true;
-
 					_logMessage = CastlingPerfomed + _command.substr(0, 5) + L'\n';
 					return;
 				}
@@ -433,12 +507,37 @@ void Game::logic(Point currentPosition, Point newPosition)
 			
 		}
 	}
-	//checking for En passant
-		//TODO
+
+	//en passant checking,  execution if needed
+	if (figureToMove->getType() == Type::PAWN && _enPassantFigure) {
+		if (newPosition == _firstEnPassantPoint) {
+			if (enPassant(figureToMove, currentPosition, newPosition)) {
+				Point secondEnPassantPoint = _enPassantFigure->getLocation();
+
+				_enemyArmy->erase(_enPassantFigure);
+				_board[currentPosition.x][currentPosition.y] = nullptr;
+				_board[secondEnPassantPoint.x][secondEnPassantPoint.y] = nullptr;
+				_board[newPosition.x][newPosition.y] = figureToMove;
+				figureToMove->setLocation(newPosition);
+
+				_logMessage = enPassantPerformedString + _command.substr(0, 5) + L'\n';
+				_moveCompleted = true;
+
+				return;
+			}
+			else {
+				_logMessage = ErrorenPassantString + _command.substr(0, 5) + L'\n';
+				_moveCompleted = false;
+
+				return;
+			}
+		}
+		
+	}
+	_enPassantFigure = nullptr;
 
 	// checking if figureToMove can execute command
 	bool moveIsLegal = false;
-	
 	auto v_possibleMoves = figureToMove->getPossibleMoves(_board);
 
 	for (auto possiblePosition : *v_possibleMoves) {
@@ -450,18 +549,32 @@ void Game::logic(Point currentPosition, Point newPosition)
 
 	if (!moveIsLegal) {
 		_moveCompleted = false;
-		
 		_logMessage = ErrorMoveIsIllegal + _command.substr(0, 5) + L'\n';
+
 		return;
 	}
 
 	// checking if figure's movement doesn't endanger the king
-
 	if (isKingInDanger(figureToMove, currentPosition, newPosition)) {
 		_logMessage = ErrorKingIsInDanger + _command.substr(0, 5) + L'\n';
 		_moveCompleted = false;
 
 		return;
+	}
+
+	//checking for new En passant
+	if (figureToMove->_firstMove) {
+		if (figureToMove->getType() == Type::PAWN) {
+			int delta = newPosition.x - currentPosition.x;
+
+			if (delta == 2) {
+				_firstEnPassantPoint = Point{ newPosition.x - 1, newPosition.y };
+			}
+			else if (delta == -2) {
+				_firstEnPassantPoint = Point{ newPosition.x + 1, newPosition.y };
+			}
+			_enPassantFigure = figureToMove;
+		}
 	}
 
 	// Removing enemy's figure (if needed) and moving figure on new position
@@ -475,47 +588,58 @@ void Game::logic(Point currentPosition, Point newPosition)
 	_board[newPosition.x][newPosition.y] = figureToMove;
 	figureToMove->setLocation(newPosition);
 	figureToMove->_firstMove = false;
-	_logMessage = PreviousMove + _command.substr(0, 5) + L'\n';
-
+	_CHECK = false;
+	_logMessage = PreviousMoveString + _command.substr(0, 5) + L'\n';
 
 	// checking for promotion
-	// if (figureToMove->getType() == Type::PAWN && (newPosition.x == 0 || newPosition.x == BOARD_SIZE - 1)) {
-	if (1) {
+	if (figureToMove->getType() == Type::PAWN && (newPosition.x == 0 || newPosition.x == BOARD_SIZE - 1)) {
 		promotion(figureToMove, newPosition);
 	}
 
-	_moveCompleted = true; // false
+	_moveCompleted = true;
 }
 
-bool Game::Castling(Figure* king, Point currentPosition, Point newPosition)
+
+bool Game::castling(Figure* king, Point currentPosition, Point newPosition)
 {
 	if (!_CHECK) {
+		// cheking right rook
 		if (newPosition.y > currentPosition.y) {
 			Figure* rook = _board[newPosition.x][BOARD_SIZE - 1];
 
 			if (rook && rook->getType() == Type::ROOK && rook->_firstMove) {
+				// cheking squares between king and rook
 				for (int i = currentPosition.y + 1; i <= newPosition.y; ++i) {
 					if (_board[currentPosition.x][i] || isKingInDanger(king, currentPosition, Point{ currentPosition.x, i })) {
 						return false;
 					}
 				}
+				// executing castling
+
+				//// king movement
 				_board[currentPosition.x][currentPosition.y] = nullptr;
 				_board[newPosition.x][newPosition.y] = king;
 				king->setLocation(newPosition);
+
 				king->_firstMove = false;
 
+				//// rook movement
 				Point rookPosition = rook->getLocation();
 
 				_board[rookPosition.x][rookPosition.y] = nullptr;
-				_board[newPosition.x][newPosition.y - 1] = rook;
-				rook->setLocation(newPosition);
+				rookPosition.y = newPosition.y - 1;
+				_board[rookPosition.x][rookPosition.y] = rook;
+				rook->setLocation(rookPosition);
+
 				rook->_firstMove = false;
 			}
 		}
 		else {
+			// cheking left rook
 			Figure* rook = _board[newPosition.x][0];
 
 			if (rook && rook->getType() == Type::ROOK && rook->_firstMove) {
+				// cheking squares between king and rook
 				for (int i = currentPosition.y - 1; i > 0; --i) {
 					if (_board[currentPosition.x][i]) {
 						return false;
@@ -526,21 +650,62 @@ bool Game::Castling(Figure* king, Point currentPosition, Point newPosition)
 						return false;
 					}
 				}
+				// executing castling
+
+				//// king movement
 				_board[currentPosition.x][currentPosition.y] = nullptr;
 				_board[newPosition.x][newPosition.y] = king;
 				king->setLocation(newPosition);
 
+				king->_firstMove = false;
+
+				//// rook movement
 				Point rookPosition = rook->getLocation();
 
 				_board[rookPosition.x][rookPosition.y] = nullptr;
-				_board[newPosition.x][newPosition.y + 1] = rook;
-				rook->setLocation(newPosition);
+				rookPosition.y = newPosition.y + 1;
+				_board[rookPosition.x][rookPosition.y] = rook;
+				rook->setLocation(rookPosition);
+
+				rook->_firstMove = false;
 			}
 		}
+		return true;
 	}
 
 	return false;
 }
+
+
+bool Game::enPassant(Figure* figureToMove, Point currentPosition, Point newPosition)
+{
+	bool moveIsPossible = false;
+	Point secondEnPassantPoint = _enPassantFigure->getLocation();
+	int delta = currentPosition.y - secondEnPassantPoint.y;
+
+	if (currentPosition.x == secondEnPassantPoint.x && (delta == 1 || delta == -1)) { 
+		// setting board as if move's been executed
+		_enemyArmy->erase(_enPassantFigure);
+		_board[currentPosition.x][currentPosition.y] = nullptr;
+		_board[secondEnPassantPoint.x][secondEnPassantPoint.y] = nullptr;
+		_board[newPosition.x][newPosition.y] = figureToMove;
+		figureToMove->setLocation(newPosition);
+
+		// checking for "check"
+		moveIsPossible = !isCheck();
+
+		// setting board to previous position
+		_board[currentPosition.x][currentPosition.y] = figureToMove;
+		_board[secondEnPassantPoint.x][secondEnPassantPoint.y] = _enPassantFigure;
+		_board[newPosition.x][newPosition.y] = nullptr;
+		figureToMove->setLocation(currentPosition);
+
+		_enemyArmy->insert(_enPassantFigure);
+	}
+	
+	return moveIsPossible;
+}
+
 
 bool Game::isKingInDanger(Figure* figureToMove, Point currentPosition, Point newPosition)
 {
@@ -549,13 +714,15 @@ bool Game::isKingInDanger(Figure* figureToMove, Point currentPosition, Point new
 	if (enemyFigure) {
 		_enemyArmy->erase(enemyFigure);
 	}
-
+	// setting board as if move's been executed
 	_board[currentPosition.x][currentPosition.y] = nullptr;
 	_board[newPosition.x][newPosition.y] = figureToMove;
 	figureToMove->setLocation(newPosition);
 
+	// checking for "check"
 	bool inDanger = isCheck();
 
+	// setting board to previous position
 	_board[currentPosition.x][currentPosition.y] = figureToMove;
 	_board[newPosition.x][newPosition.y] = enemyFigure;
 	figureToMove->setLocation(currentPosition);
@@ -566,6 +733,7 @@ bool Game::isKingInDanger(Figure* figureToMove, Point currentPosition, Point new
 
 	return inDanger;
 }
+
 
 void Game::promotion(Figure* figureToMove, Point newPosition)
 {
@@ -591,6 +759,7 @@ void Game::promotion(Figure* figureToMove, Point newPosition)
 
 		if (figureType[0] == L'Q' || figureType[0] == L'q') {
 			promotedFigure = new F_Queen(color, newPosition);
+
 			if (bit_currentArmy->test(bit_F_Queen1)) {
 				bit_currentArmy->set(bit_F_Queen2);
 			}
@@ -602,6 +771,7 @@ void Game::promotion(Figure* figureToMove, Point newPosition)
 		}
 		else if (figureType[0] == L'B' || figureType[0] == L'b') {
 			promotedFigure = new F_Bishop(color, newPosition);
+
 			if ((newPosition.x + newPosition.y) % 2) {
 				bit_currentArmy->set(bit_F_Bishop1);
 			}
@@ -612,6 +782,7 @@ void Game::promotion(Figure* figureToMove, Point newPosition)
 		}
 		else if (figureType[0] == L'N' || figureType[0] == L'n') {
 			promotedFigure = new F_Knight(color, newPosition);
+
 			if (bit_currentArmy->test(bit_F_Knight1)) {
 				bit_currentArmy->set(bit_F_Knight2);
 			}
@@ -622,6 +793,7 @@ void Game::promotion(Figure* figureToMove, Point newPosition)
 		}
 		else if (figureType[0] == L'R' || figureType[0] == L'r') {
 			promotedFigure = new F_Rook(color, newPosition);
+
 			if (bit_currentArmy->test(bit_F_Rook1)) {
 				bit_currentArmy->set(bit_F_Rook2);
 			}
@@ -633,20 +805,25 @@ void Game::promotion(Figure* figureToMove, Point newPosition)
 		_logMessage = ErrorPromotionType1 + figureType[0] + ErrorPromotionType2;
 	}
 
+	// deleting pawn
 	_currentArmy->erase(figureToMove);
 	delete figureToMove;
-	_board[newPosition.x][newPosition.y] = promotedFigure;
-	_currentArmy->insert(promotedFigure);
 	_pawnQuantity -= 1;
 
+	// setting new figure
+	_board[newPosition.x][newPosition.y] = promotedFigure;
+	_currentArmy->insert(promotedFigure);
+	
 	_logMessage = previousMoveString;
 }
+
 
 void Game::deletingFigure(Figure* enemyFigure)
 {
 	_enemyArmy->erase(enemyFigure);
 	Type type = enemyFigure->getType();
 	Point location = enemyFigure->getLocation();
+	
 	std::bitset<BOARD_SIZE>* bit_enemyArmy;
 	if (_halfTurn % 2) {
 		bit_enemyArmy = &_bit_blackArmy;
@@ -654,8 +831,6 @@ void Game::deletingFigure(Figure* enemyFigure)
 	else {
 		bit_enemyArmy = &_bit_whiteArmy;
 	}
-
-
 
 	// updating bitset considering type of deleted figure
 	switch (type) {
@@ -701,26 +876,26 @@ void Game::deletingFigure(Figure* enemyFigure)
 	delete enemyFigure;
 }
 
-void Game::endMenu()
-{
-}
 
 void Game::gameLoop()
 {
-	startMenu();
-
 	while (!_gameOver) {
 		_halfTurn += 1;
+
+		// updating pointers for quick access
 		if (_halfTurn % 2) {
 			_currentArmy = _whiteArmy;
 			_enemyArmy = _blackArmy;
+			_activeKing = _WKing;
 		}
 		else {
 			_currentArmy = _blackArmy;
 			_enemyArmy = _whiteArmy;
+			_activeKing = _BKing;
 		}
 
 		if (isCheck()) {
+			_CHECK = true;
 			if (isCheckmate()) {
 				_gameOver = true;
 				_moveCompleted = true;
@@ -741,6 +916,4 @@ void Game::gameLoop()
 	}
 
 	drawGameField();
-	//exit(0);
-	endMenu();
 }

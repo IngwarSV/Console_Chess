@@ -1,20 +1,13 @@
 #include "Units.h"
 
-F_King::F_King(Color color, Point location, Type type) : Figure(color, location, type)
-{
-}
+F_King::F_King(Color color, Point location, Type type) : Figure(color, location, type) {}
 
-F_King::~F_King()
-{
-}
+F_King::~F_King() {}
 
 std::vector<Point>* F_King::getPossibleMoves(Figure*** board)
 {
+	// clearing vector every turn
 	_possibleMoves->clear();
-
-	if (!board) {
-		throw "Figure*** _board == nullptr";
-	}
 
 	//"vertical" moves
 	Point tempLocation = this->getLocation();
@@ -136,30 +129,19 @@ std::vector<Point>* F_King::getPossibleMoves(Figure*** board)
 		}
 	}
 
-	// 
-
-
-
 	return _possibleMoves;
 }
 
 
 
-F_Queen::F_Queen(Color color, Point location, Type type) : Figure(color, location, type)
-{
-}
+F_Queen::F_Queen(Color color, Point location, Type type) : Figure(color, location, type) {}
 
-F_Queen::~F_Queen()
-{
-}
+F_Queen::~F_Queen() {}
 
 std::vector<Point>* F_Queen::getPossibleMoves(Figure*** board)
 {
+	// clearing vector every turn
 	_possibleMoves->clear();
-
-	if (!board) {
-		throw "Figure*** _board == nullptr";
-	}
 
 	//vertical moves
 	Point tempLocation = this->getLocation();
@@ -314,21 +296,14 @@ std::vector<Point>* F_Queen::getPossibleMoves(Figure*** board)
 
 
 
-F_Bishop::F_Bishop(Color color, Point location, Type type) : Figure(color, location, type)
-{
-}
+F_Bishop::F_Bishop(Color color, Point location, Type type) : Figure(color, location, type) {}
 
-F_Bishop::~F_Bishop()
-{
-}
+F_Bishop::~F_Bishop() {}
 
 std::vector<Point>* F_Bishop::getPossibleMoves(Figure*** board)
 {
+	// clearing vector every turn
 	_possibleMoves->clear();
-
-	if (!board) {
-		throw "Figure*** _board == nullptr";
-	}
 
 	//right diagonal moves
 	Point tempLocation = this->getLocation();
@@ -413,21 +388,14 @@ std::vector<Point>* F_Bishop::getPossibleMoves(Figure*** board)
 
 
 
-F_Knight::F_Knight(Color color, Point location, Type type) : Figure(color, location, type)
-{
-}
+F_Knight::F_Knight(Color color, Point location, Type type) : Figure(color, location, type) {}
 
-F_Knight::~F_Knight()
-{
-}
+F_Knight::~F_Knight() {}
 
 std::vector<Point>* F_Knight::getPossibleMoves(Figure*** board)
 {
+	// clearing vector every turn
 	_possibleMoves->clear();
-
-	if (!board) {
-		throw "Figure*** _board == nullptr";
-	}
 
 	//"vertical" up moves
 	Point tempLocation = this->getLocation();
@@ -558,21 +526,14 @@ std::vector<Point>* F_Knight::getPossibleMoves(Figure*** board)
 
 
 
-F_Rook::F_Rook(Color color, Point location, Type type) : Figure(color, location, type)
-{
-}
+F_Rook::F_Rook(Color color, Point location, Type type) : Figure(color, location, type) {}
 
-F_Rook::~F_Rook()
-{
-}
+F_Rook::~F_Rook() {}
 
 std::vector<Point>* F_Rook::getPossibleMoves(Figure*** board)
 {
+	// clearing vector every turn
 	_possibleMoves->clear();
-
-	if (!board) {
-		throw "Figure*** _board == nullptr";
-	}
 
 	//vertical moves
 	Point tempLocation = this->getLocation();
@@ -649,21 +610,14 @@ std::vector<Point>* F_Rook::getPossibleMoves(Figure*** board)
 
 
 
-F_Pawn::F_Pawn(Color color, Point location, Type type) : Figure(color, location, type)
-{
-}
+F_Pawn::F_Pawn(Color color, Point location, Type type) : Figure(color, location, type) {}
 
-F_Pawn::~F_Pawn()
-{
-}
+F_Pawn::~F_Pawn() {}
 
 std::vector<Point>* F_Pawn::getPossibleMoves(Figure*** board)
 {
+	// clearing vector every turn
 	_possibleMoves->clear();
-
-	if (!board) {
-		throw "Figure*** _board == nullptr";
-	}
 
 	int delta = 1;
 	if (this->getColor() == Color::BLACK) {
@@ -676,17 +630,20 @@ std::vector<Point>* F_Pawn::getPossibleMoves(Figure*** board)
 
 	if (tempLocation.x >= 0 && tempLocation.x < BOARD_SIZE) {
 		const Figure* figure = board[tempLocation.x][tempLocation.y];
+
 		if (!figure) {
 			_possibleMoves->push_back(tempLocation);
 		}
 	}
 
 	if (this->_firstMove) {
+		const Figure* figure1 = board[tempLocation.x][tempLocation.y];
+
 		tempLocation.x += delta;
 		if (tempLocation.x >= 0 && tempLocation.x < BOARD_SIZE) {
-			const Figure* figure = board[tempLocation.x][tempLocation.y];
+			const Figure* figure2 = board[tempLocation.x][tempLocation.y];
 
-			if (!figure) {
+			if (!figure1 && !figure2) {
 				_possibleMoves->push_back(tempLocation);
 			}
 		}
@@ -700,6 +657,7 @@ std::vector<Point>* F_Pawn::getPossibleMoves(Figure*** board)
 	if (tempLocation.x >= 0 && tempLocation.x < BOARD_SIZE && 
 		tempLocation.y >= 0 && tempLocation.y < BOARD_SIZE) {
 		const Figure* figure = board[tempLocation.x][tempLocation.y];
+
 		if (figure) {
 			if (figure->getColor() != this->getColor()) {
 				_possibleMoves->push_back(tempLocation);
@@ -714,13 +672,13 @@ std::vector<Point>* F_Pawn::getPossibleMoves(Figure*** board)
 	if (tempLocation.x >= 0 && tempLocation.x < BOARD_SIZE &&
 		tempLocation.y >= 0 && tempLocation.y < BOARD_SIZE) {
 		const Figure* figure = board[tempLocation.x][tempLocation.y];
+
 		if (figure) {
 			if (figure->getColor() != this->getColor()) {
 				_possibleMoves->push_back(tempLocation);
 			}
 		}
 	}
-	
-	
+
 	return _possibleMoves;
 }
