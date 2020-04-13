@@ -356,7 +356,7 @@ void Game::input()
 	}
 	else if (_command[0] == L'L' || _command[0] == L'l') {
 		loadGame();
-		_moveCompleted = true;
+		_moveCompleted = false;
 		return;
 	}
 	else if (_command[0] == L'S' || _command[0] == L's') {

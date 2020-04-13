@@ -53,13 +53,13 @@ namespace DEF_SETT {
 	const wchar_t BLACK_MOVE_STRING[] = L"Current turn: BLACK\n";
 
 	// "Black's move" string
-	const wchar_t COMMANDS_STRING[] = L"Commands: (N)ew, (L)oad, (S)ave,\n\t   Move e.g.: <a4-a5>\n";
+	const wchar_t COMMANDS_STRING[] = L"Commands: (N)ew, Load, Save,\n\t   Move e.g.: (a4 a5)\n";
 
 	// "Black's move" string
 	const wchar_t ENTER_COMMAND_STRING[] = L"Enter command: ";
 
 	// Log Messages
-	const std::wstring ErrorInvalidMoveParam = L"Invalid move command, enter e.g.: (a2-a4): ";
+	const std::wstring ErrorInvalidMoveParam = L"Invalid move command, enter e.g.: (a2 a4): ";
 	const std::wstring ErrorInvalidPos1 = L"Invalid parameter for current position of figure: ";
 	const std::wstring ErrorInvalidPos2 = L"Invalid parameter for new position of figure: ";
 	const std::wstring ErrorInvalidPos3 = L"No figure in your set on the position: ";
