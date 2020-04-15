@@ -79,31 +79,31 @@ namespace DEF_SETT {
 	const std::wstring impossibleCheckmate3 = L"DRAW: king and knight versus king\n";
 	const std::wstring ErrorCheckString = L"Warning: C H E C K!\n";
 	const std::wstring ErrorCheckmateString = L"CHECKMATE: G A M E  O V E R!\n";
-
+	const std::wstring EnteringSetString = L"TODO: EnteringSetString\n";
 
 	// Figures' starting positions
 
 	//// White Army
-	const Point WR_INIT_POS1{ 0,0 };
-	const Point WN_INIT_POS1{ 0,1 };
-	const Point WB_INIT_POS1{ 0,2 };
-	const Point WQ_INIT_POS{ 0,3 };
-	const Point WK_INIT_POS{ 0,4 };
-	const Point WB_INIT_POS2{ 0,5 };
-	const Point WN_INIT_POS2{ 0,6 };
-	const Point WR_INIT_POS2{ 0,7 };
-	const Point WP_INIT_POS1{ 1,0 };
-
+	const Point WR_INIT_POS1{ 7,0 };
+	const Point WN_INIT_POS1{ 7,1 };
+	const Point WB_INIT_POS1{ 7,2 };
+	const Point WQ_INIT_POS{ 7,3 };
+	const Point WK_INIT_POS{ 7,4 };
+	const Point WB_INIT_POS2{ 7,5 };
+	const Point WN_INIT_POS2{ 7,6 };
+	const Point WR_INIT_POS2{ 7,7 };
+	const Point WP_INIT_POS1{ 6,0 };
+	
 	//// Black Army
-	const Point BR_INIT_POS1{ 7,0 };
-	const Point BN_INIT_POS1{ 7,1 };
-	const Point BB_INIT_POS1{ 7,2 };
-	const Point BQ_INIT_POS{ 7,3 };
-	const Point BK_INIT_POS{ 7,4 };
-	const Point BB_INIT_POS2{ 7,5 };
-	const Point BN_INIT_POS2{ 7,6 };
-	const Point BR_INIT_POS2{ 7,7 };
-	const Point BP_INIT_POS1{ 6,0 };
+	const Point BR_INIT_POS1{ 0,0 };
+	const Point BN_INIT_POS1{ 0,1 };
+	const Point BB_INIT_POS1{ 0,2 };
+	const Point BQ_INIT_POS{ 0,3 };
+	const Point BK_INIT_POS{ 0,4 };
+	const Point BB_INIT_POS2{ 0,5 };
+	const Point BN_INIT_POS2{ 0,6 };
+	const Point BR_INIT_POS2{ 0,7 };
+	const Point BP_INIT_POS1{ 1,0 };
 
 
 	// serial number of bits for 8 figures: N1, N2, B1, B2, R1, R2, Q1, Q2 in bitsets

@@ -620,7 +620,7 @@ std::vector<Point>* F_Pawn::getPossibleMoves(Figure*** board)
 	_possibleMoves->clear();
 
 	int delta = 1;
-	if (this->getColor() == Color::BLACK) {
+	if (this->getColor() == Color::WHITE) {
 		delta = -1;
 	}
 

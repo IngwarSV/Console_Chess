@@ -40,8 +40,8 @@ private:
 	Figure* _activeKing;
 
 	// for "en passant" actions 
-	Point _firstEnPassantPoint;
-	Figure* _enPassantFigure;
+	Figure* _enPassantFigure; // pawn that just made en Passant
+	Point _firstEnPassantPoint; // square that was skipped
 
 	int _halfTurn; // game turns * 2
 	bool _CHECK;
@@ -87,6 +87,8 @@ private:
 	void promotion(Figure* figureToMove, Point newPosition);
 
 	void deletingFigure(Figure* enemyFigure);
+
+	void setFigures(); // create new Game with certain positions of figures
 
 
 public:

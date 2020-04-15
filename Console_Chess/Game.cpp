@@ -21,11 +21,11 @@ void Game::initialSetup()
 		}
 	}
 
-	for (int i = 1, counter = 0; i < fieldEdge; ++i) {
+	for (int i = 1, counter = BOARD_SIZE; i < fieldEdge; ++i) {
 		if (i % 2) {
-			counter += 1;
 			_totalGameField[i][0] = std::to_wstring(counter) + L"\u2551";
 			_totalGameField[i][fieldEdge] = L"\u2551" + std::to_wstring(counter);
+			counter -= 1;
 		}
 		else {
 			_totalGameField[i][0] = L" \u255F";
@@ -118,7 +118,9 @@ void Game::initialSetup()
 	_currentArmy = _whiteArmy;
 	_enemyArmy = _blackArmy;
 
-	_enPassantFigure = nullptr;
+	// for "en passant" actions 
+	_enPassantFigure = nullptr; // pawn that just made en Passant
+	_firstEnPassantPoint = Point{ BOARD_SIZE, BOARD_SIZE }; // setting point out of the board
 	_halfTurn = 0;
 	_CHECK = false;
 	_gameOver = false;
@@ -334,7 +336,8 @@ bool Game::isDraw()
 	}
 
 	//// king and knight versus king
-	if (_bit_temp.to_ulong() == 1Ul || _bit_temp.to_ulong() == 2Ul) {
+	
+	if (_bit_temp.to_ulong() == 1Ul && _bit_whiteArmy != _bit_blackArmy) {
 		_logMessage = impossibleCheckmate3;
 		return true;
 	}
@@ -374,7 +377,7 @@ void Game::input()
 	}
 
 	// checking and converting the entered current position for the figure, 
-	// e.g "a1" == Point(0,0),"b3" == Point(2,1)
+	// e.g "a8" == Point(0,0),"b3" == Point(5,1)
 	Point currentPosition;
 
 	wchar_t capitalLetter = L'A';
@@ -382,14 +385,14 @@ void Game::input()
 	bool flag1 = true;
 	bool flag2 = true;
 
-	for (int i = 0; i < BOARD_SIZE; ++i) {
+	for (int i = 0, j = BOARD_SIZE - 1; i < BOARD_SIZE; ++i) {
 		if (_command[0] == capitalLetter || _command[0] == lowercaseLetter) {
 			currentPosition.y = i;
 			flag1 = false;
 		}
 		
 		if (_command[1] == static_cast<wchar_t>(i + 49)) {
-			currentPosition.x = i;
+			currentPosition.x = j - i;
 			flag2 = false;
 		}
 		capitalLetter += 1;
@@ -411,14 +414,14 @@ void Game::input()
 	flag1 = true;
 	flag2 = true;
 
-	for (int i = 0; i < BOARD_SIZE; ++i) {
+	for (int i = 0, j = BOARD_SIZE - 1; i < BOARD_SIZE; ++i) {
 		if (_command[3] == capitalLetter || _command[3] == lowercaseLetter) {
 			newPosition.y = i;
 			flag1 = false;
 		}
 
 		if (_command[4] == static_cast<wchar_t>(i + 49)) {
-			newPosition.x = i;
+			newPosition.x = j - i;
 			flag2 = false;
 		}
 		capitalLetter += 1;
@@ -499,6 +502,10 @@ void Game::mainLogic(Point currentPosition, Point newPosition)
 					return;
 				}
 				else {
+					// deleting data for En passant
+					_enPassantFigure = nullptr;
+					_firstEnPassantPoint = Point{ BOARD_SIZE, BOARD_SIZE }; // setting point out of the board
+
 					_moveCompleted = true;
 					_logMessage = CastlingPerfomed + _command.substr(0, 5) + L'\n';
 					return;
@@ -508,7 +515,7 @@ void Game::mainLogic(Point currentPosition, Point newPosition)
 		}
 	}
 
-	//en passant checking,  execution if needed
+	//en passant checking, execution if needed
 	if (figureToMove->getType() == Type::PAWN && _enPassantFigure) {
 		if (newPosition == _firstEnPassantPoint) {
 			if (enPassant(figureToMove, currentPosition, newPosition)) {
@@ -520,6 +527,9 @@ void Game::mainLogic(Point currentPosition, Point newPosition)
 				_board[newPosition.x][newPosition.y] = figureToMove;
 				figureToMove->setLocation(newPosition);
 
+				// deleting data for En passant
+				_enPassantFigure = nullptr;
+				_firstEnPassantPoint = Point{ BOARD_SIZE, BOARD_SIZE }; // setting point out of the board
 				_logMessage = enPassantPerformedString + _command.substr(0, 5) + L'\n';
 				_moveCompleted = true;
 
@@ -532,9 +542,8 @@ void Game::mainLogic(Point currentPosition, Point newPosition)
 				return;
 			}
 		}
-		
 	}
-	_enPassantFigure = nullptr;
+	
 
 	// checking if figureToMove can execute command
 	bool moveIsLegal = false;
@@ -562,18 +571,23 @@ void Game::mainLogic(Point currentPosition, Point newPosition)
 		return;
 	}
 
-	//checking for new En passant
+	// deleting data for En passant
+	_enPassantFigure = nullptr;
+	_firstEnPassantPoint = Point{ BOARD_SIZE, BOARD_SIZE }; // setting point out of the board
+
+	//checking for new En passant data
 	if (figureToMove->_firstMove) {
 		if (figureToMove->getType() == Type::PAWN) {
 			int delta = newPosition.x - currentPosition.x;
 
 			if (delta == 2) {
+				_enPassantFigure = figureToMove;
 				_firstEnPassantPoint = Point{ newPosition.x - 1, newPosition.y };
 			}
 			else if (delta == -2) {
+				_enPassantFigure = figureToMove;
 				_firstEnPassantPoint = Point{ newPosition.x + 1, newPosition.y };
 			}
-			_enPassantFigure = figureToMove;
 		}
 	}
 
@@ -874,6 +888,224 @@ void Game::deletingFigure(Figure* enemyFigure)
 	}
 	
 	delete enemyFigure;
+}
+
+
+void Game::setFigures()
+{
+	_bit_whiteArmy.reset();
+	_bit_blackArmy.reset();
+
+	std::wstring col_type_loc;
+	bool WhiteKing = false;
+	bool BlackKing = false;
+	bool flag = false;
+	std::set<Point> occupiedSquares;
+	_logMessage = EnteringSetString;
+
+	// deleting current figures
+	for (auto figure : *_whiteArmy) {
+		delete figure;
+	}
+	_whiteArmy->clear();
+
+	for (auto figure : *_blackArmy) {
+		delete figure;
+	}
+	_blackArmy->clear();
+
+	// Setting board with nullptrs
+	for (int i = 0; i < BOARD_SIZE; ++i) {
+		for (int j = 0; j < BOARD_SIZE; ++j) {
+			_board[i][j] = nullptr;
+		}
+	}
+	
+
+	Point location;
+
+	while (col_type_loc != L"End" && !flag) {
+		Figure* newFigure = nullptr;
+		Color color;
+		
+
+		std::getline(std::wcin, col_type_loc);
+
+		//setting color
+		if (col_type_loc[0] == L'W' || col_type_loc[0] == L'w') {
+			color = Color::WHITE;
+		}
+		else if (col_type_loc[0] == L'B' || col_type_loc[0] == L'b') {
+			color = Color::BLACK;
+		}
+		else {
+			_logMessage = EnteringSetString; //todo ErrorColorSetString
+			continue;
+		}
+
+		//setting location, e.g "a8" == Point(0,0),"b3" == Point(5,1)
+		wchar_t capitalLetter = L'A';
+		wchar_t	lowercaseLetter = L'a';
+		bool flag1 = true;
+		bool flag2 = true;
+
+		for (int i = 0, j = BOARD_SIZE - 1; i < BOARD_SIZE; ++i) {
+			if (col_type_loc[3] == capitalLetter || col_type_loc[3] == lowercaseLetter) {
+				location.y = i;
+				flag1 = false;
+			}
+
+			if (col_type_loc[4] == static_cast<wchar_t>(i + 49)) {
+				location.x = j - i;
+				flag2 = false;
+			}
+			capitalLetter += 1;
+			lowercaseLetter += 1;
+		}
+
+		if (flag1 || flag2) {
+			_logMessage = EnteringSetString; //todo ErrorLocSetString
+			continue;
+		}
+		//else if (occupiedSquares.find(location) != occupiedSquares.end()) {
+		//	_logMessage = EnteringSetString; //todo ErrorLocOccupiedSetString
+		//	continue;
+		//}
+
+		//setting type, creating new figure, adding figure to army and setting army's bitset
+		if (col_type_loc[1] == L'K' || col_type_loc[1] == L'k') {
+			newFigure = new F_King(color, location);
+			if (color == Color::WHITE) {
+				_whiteArmy->insert(newFigure);
+				_WKing = newFigure;
+				WhiteKing = true;
+			}
+			else {
+				_blackArmy->insert(newFigure);
+				_BKing = newFigure;
+				BlackKing = true;
+			}
+		}
+		else if (col_type_loc[1] == L'Q' || col_type_loc[1] == L'q') {
+			newFigure = new F_Queen(color, location);
+			if (color == Color::WHITE) {
+				_whiteArmy->insert(newFigure);
+				if (_bit_whiteArmy.test(bit_F_Queen1)) {
+					_bit_whiteArmy.set(bit_F_Queen2);
+				}
+				else {
+					_bit_whiteArmy.set(bit_F_Queen1);
+				}
+			}
+			else {
+				_blackArmy->insert(newFigure);
+				if (_bit_blackArmy.test(bit_F_Queen1)) {
+					_bit_blackArmy.set(bit_F_Queen2);
+				}
+				else {
+					_bit_blackArmy.set(bit_F_Queen1);
+				}
+			}
+		}
+		else if (col_type_loc[1] == L'B' || col_type_loc[1] == L'b') {
+			newFigure = new F_Bishop(color, location);
+
+			if (color == Color::WHITE) {
+				_whiteArmy->insert(newFigure);
+
+				if ((location.x + location.y) % 2) {
+					_bit_whiteArmy.set(bit_F_Bishop1);
+				}
+				else {
+					_bit_whiteArmy.set(bit_F_Bishop2);
+				}
+			}
+			else {
+				_blackArmy->insert(newFigure);
+
+				if ((location.x + location.y) % 2) {
+					_bit_blackArmy.set(bit_F_Bishop1);
+				}
+				else {
+					_bit_blackArmy.set(bit_F_Bishop2);
+				}
+			}
+		}
+		else if (col_type_loc[1] == L'N' || col_type_loc[1] == L'n') {
+			newFigure = new F_Knight(color, location);
+
+			if (color == Color::WHITE) {
+				_whiteArmy->insert(newFigure);
+
+				if (_bit_whiteArmy.test(bit_F_Knight1)) {
+					_bit_whiteArmy.set(bit_F_Knight2);
+				}
+				else {
+					_bit_whiteArmy.set(bit_F_Knight1);
+				}
+			}
+			else {
+				_blackArmy->insert(newFigure);
+
+				if (_bit_blackArmy.test(bit_F_Knight1)) {
+					_bit_blackArmy.set(bit_F_Knight2);
+				}
+				else {
+					_bit_blackArmy.set(bit_F_Knight1);
+				}
+			}
+		}
+		else if (col_type_loc[1] == L'R' || col_type_loc[1] == L'r') {
+			newFigure = new F_Rook(color, location);
+
+			if (color == Color::WHITE) {
+				_whiteArmy->insert(newFigure);
+
+				if (_bit_whiteArmy.test(bit_F_Rook1)) {
+					_bit_whiteArmy.set(bit_F_Rook2);
+				}
+				else {
+					_bit_whiteArmy.set(bit_F_Rook1);
+				}
+			}
+			else {
+				_blackArmy->insert(newFigure);
+
+				if (_bit_blackArmy.test(bit_F_Rook1)) {
+					_bit_blackArmy.set(bit_F_Rook2);
+				}
+				else {
+					_bit_blackArmy.set(bit_F_Rook1);
+				}
+			}
+		}
+		else if (col_type_loc[1] == L'P' || col_type_loc[1] == L'p') {
+			newFigure = new F_Pawn(color, location);
+
+			if (color == Color::WHITE) {
+				_whiteArmy->insert(newFigure);
+			}
+			else {
+				_blackArmy->insert(newFigure);
+			}
+		}
+		else {
+			delete newFigure;
+			_logMessage = EnteringSetString; //todo ErrorTypeSetString
+			continue;
+		}
+
+		occupiedSquares.insert(location);
+
+
+		//setting first move state
+		if (col_type_loc[5] != L'1') {
+			newFigure->_firstMove = false;
+		}
+
+		//_logMessage = ErrorPromotionType1 + figureType[0] + ErrorPromotionType2;
+
+	}
 }
 
 
