@@ -2,7 +2,7 @@
 
 #include <iostream>
 #include <string>
-#include <set>
+#include <unordered_set>
 #include <bitset>
 
 #include "Specification.h"
@@ -23,10 +23,10 @@ private:
 	std::wstring **_totalGameField; 
 	
 	//// sets for "White" and "Black" armies and pointers on them
-	std::set<Figure*>* _whiteArmy;
-	std::set<Figure*>* _blackArmy;
-	std::set<Figure*>* _currentArmy;
-	std::set<Figure*>* _enemyArmy;
+	std::unordered_set<Figure*>* _whiteArmy;
+	std::unordered_set<Figure*>* _blackArmy;
+	std::unordered_set<Figure*>* _currentArmy;
+	std::unordered_set<Figure*>* _enemyArmy;
 
 	//// bitsets 0111 1111 for 8 figures (B1, B2, N1, N2, R1, R2, Q1, Q2) in army 
 	std::bitset<BOARD_SIZE> _bit_whiteArmy{ 127 };// including 1 place for promoted Queen 
@@ -49,7 +49,7 @@ private:
 	bool _moveCompleted;
 
 	std::wstring _command; // for command line instructions
-	std::wstring _logMessage{}; // for game notifications
+	std::wstring _logMessage; // for game notifications
 
 	// methods
 	void initialSetup();
@@ -88,7 +88,7 @@ private:
 
 	void deletingFigure(Figure* enemyFigure);
 
-	void setFigures(); // create new Game with certain positions of figures
+	void customGame(); // create new Game with certain positions of figures
 
 
 public:

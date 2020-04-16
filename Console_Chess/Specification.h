@@ -8,6 +8,18 @@ struct Point {
 	bool operator==(const Point& other) const {
 		return this->x == other.x && this->y == other.y;
 	}
+
+	bool operator!=(const Point& other) const {
+		return this->x != other.x || this->y != other.y;
+	}
+
+	bool operator>(const Point& other) const {
+		return this->x > other.x && this->y > other.y;
+	}
+
+	bool operator<(const Point& other) const {
+		return !(this->x > other.x && this->y > other.y);
+	}
 };
 
 enum class Color : wchar_t {
@@ -53,13 +65,15 @@ namespace DEF_SETT {
 	const wchar_t BLACK_MOVE_STRING[] = L"Current turn: BLACK\n";
 
 	// "Black's move" string
-	const wchar_t COMMANDS_STRING[] = L"Commands: (N)ew, Load, Save,\n\t   Move e.g.: (a4 a5)\n";
+	const wchar_t COMMANDS_STRING[] = 
+		L"Commands: (N)ew, (L)oad, (S)ave, (C)ustom,\n\t  Move e.g.: (A4 A5)\n";
 
 	// "Black's move" string
 	const wchar_t ENTER_COMMAND_STRING[] = L"Enter command: ";
 
 	// Log Messages
-	const std::wstring ErrorInvalidMoveParam = L"Invalid move command, enter e.g.: (a2 a4): ";
+	const std::wstring NewGameString = L"New Game!\n";
+	const std::wstring ErrorInvalidMoveParam = L"Invalid move command, enter e.g.: (A2 A4): ";
 	const std::wstring ErrorInvalidPos1 = L"Invalid parameter for current position of figure: ";
 	const std::wstring ErrorInvalidPos2 = L"Invalid parameter for new position of figure: ";
 	const std::wstring ErrorInvalidPos3 = L"No figure in your set on the position: ";
@@ -75,11 +89,24 @@ namespace DEF_SETT {
 	const std::wstring ErrorPromotionType2 = L"\nChoose promotion (Q), (B), (N), (R)\n";
 	const std::wstring DrawStalemateString = L"DRAW: stalemate\n";
 	const std::wstring impossibleCheckmate1 = L"DRAW: two kings left\n";
-	const std::wstring impossibleCheckmate2 = L"DRAW: king with/without bishop versus king and\nbishop(bishops) on the same color\n";
+	const std::wstring impossibleCheckmate2 = 
+		L"DRAW: king with/without bishop versus king and\nbishop(bishops) on the same color\n";
 	const std::wstring impossibleCheckmate3 = L"DRAW: king and knight versus king\n";
 	const std::wstring ErrorCheckString = L"Warning: C H E C K!\n";
 	const std::wstring ErrorCheckmateString = L"CHECKMATE: G A M E  O V E R!\n";
-	const std::wstring EnteringSetString = L"TODO: EnteringSetString\n";
+	const std::wstring EnteringCustomString = 
+		L"Custom mode: (D)one, (Q)uit,\nPlace figures: (WQA2), (BBC7),\n(BKE81)-\"1\"-true for first move\n";
+	const std::wstring ErrorPlaceKingsString = L"Please place black and white kings\n";
+	const std::wstring ChooseSideToMoveString = L"Choose side to move first: W / B ?\n";
+	const std::wstring NewCustomGameString = L"New Custom Game!\n";
+	const std::wstring ErrorDataCustomString = L"Invalid data to place figure\n";
+	const std::wstring ErrorLocCustomString = L"Invalid parameter for location of figure: ";
+	const std::wstring ErrorLocOccupiedCustomString = L"Location is occupied: ";
+	const std::wstring ErrorTypeCustomString = L"Invalid parameter for type of the figure: ";
+	const std::wstring ErrorColorCustomString = L"Invalid parameter for color of the figure: ";
+	const std::wstring FigureIsPlacedString = L"Figure is placed: ";
+
+	//const std::wstring ChooseSideToMoveSetString = L"Choose side to move: W / B ?\n";
 
 	// Figures' starting positions
 

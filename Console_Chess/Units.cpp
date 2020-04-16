@@ -56,7 +56,7 @@ std::vector<Point>* F_King::getPossibleMoves(Figure*** board)
 	tempLocation = this->getLocation();
 	tempLocation.y += 1;
 
-	if (tempLocation.x < BOARD_SIZE) {
+	if (tempLocation.y < BOARD_SIZE) {
 		const Figure* figure = board[tempLocation.x][tempLocation.y];
 
 		if (!figure) {
