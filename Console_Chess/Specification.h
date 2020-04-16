@@ -12,14 +12,6 @@ struct Point {
 	bool operator!=(const Point& other) const {
 		return this->x != other.x || this->y != other.y;
 	}
-
-	bool operator>(const Point& other) const {
-		return this->x > other.x && this->y > other.y;
-	}
-
-	bool operator<(const Point& other) const {
-		return !(this->x > other.x && this->y > other.y);
-	}
 };
 
 enum class Color : wchar_t {
@@ -105,6 +97,7 @@ namespace DEF_SETT {
 	const std::wstring ErrorTypeCustomString = L"Invalid parameter for type of the figure: ";
 	const std::wstring ErrorColorCustomString = L"Invalid parameter for color of the figure: ";
 	const std::wstring FigureIsPlacedString = L"Figure is placed: ";
+	const std::wstring SaveGameAsString = L"Save as (_.txt): ";
 
 	//const std::wstring ChooseSideToMoveSetString = L"Choose side to move: W / B ?\n";
 

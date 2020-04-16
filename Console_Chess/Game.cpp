@@ -461,21 +461,36 @@ void Game::newGame()
 
 void Game::saveGame()
 {
-	
+	_logMessage = SaveGameAsString;
+	std::ofstream fout(SAVED_GAMES_PATH);
+	std::string fileName;
+
+	if (fout) {
+		std::getline(std::cin, fileName);
+		fileName += ".txt";
+
+		fout << fileName << "\n";
 
 
 
 
+	}
+	fout.close();
+
+
+	std::ifstream fin(SAVED_GAMES_PATH);
+
+	if (fin) {
+		
+		std::getline(std::wcin, _command);
 
 
 
-
-
-
-
-
-
-
+		for (int i = 0; i < TOP_SCORE_AMOUNT && !fin.eof(); ++i) {
+			fin >> this->topNScore[i];
+		}
+	}
+	fin.close();
 }
 
 

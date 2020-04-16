@@ -4,6 +4,7 @@
 #include <string>
 #include <unordered_set>
 #include <bitset>
+#include <fstream>
 
 #include "Specification.h"
 #include "Figure.h"
