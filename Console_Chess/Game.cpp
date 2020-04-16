@@ -338,7 +338,6 @@ bool Game::isDraw()
 	}
 
 	//// king and knight versus king
-	
 	if (_bit_temp.to_ulong() == 1Ul && _bit_whiteArmy != _bit_blackArmy) {
 		_logMessage = impossibleCheckmate3;
 		return true;
@@ -462,7 +461,21 @@ void Game::newGame()
 
 void Game::saveGame()
 {
-	// need to be implemented
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
 
 
