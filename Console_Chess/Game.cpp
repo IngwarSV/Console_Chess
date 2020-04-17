@@ -360,7 +360,6 @@ void Game::input()
 	}
 	if (_command[0] == L'L') {
 		loadGame();
-		_moveCompleted = false;
 		return;
 	}
 	if (_command[0] == L'S') {
@@ -390,14 +389,14 @@ void Game::input()
 	bool flag1 = true;
 	bool flag2 = true;
 
-	for (int i = 0, j = BOARD_SIZE - 1; i < BOARD_SIZE; ++i) {
+	for (int i = 0, maxXCoord = BOARD_SIZE - 1; i < BOARD_SIZE; ++i) {
 		if (_command[0] == capitalLetter) {
 			currentPosition.y = i;
 			flag1 = false;
 		}
 		
-		if (_command[1] == static_cast<wchar_t>(i + 49)) {
-			currentPosition.x = j - i;
+		if (_command[1] == static_cast<wchar_t>(i + '1')) {
+			currentPosition.x = maxXCoord - i;
 			flag2 = false;
 		}
 		capitalLetter += 1;
@@ -423,7 +422,7 @@ void Game::input()
 			flag1 = false;
 		}
 
-		if (_command[4] == static_cast<wchar_t>(i + 49)) {
+		if (_command[4] == static_cast<wchar_t>(i + '1')) {
 			newPosition.x = j - i;
 			flag2 = false;
 		}
@@ -461,42 +460,131 @@ void Game::newGame()
 
 void Game::saveGame()
 {
+	fs::create_directory(SAVED_GAMES_DIR);
+	std::wstring fileName;
 	_logMessage = SaveGameAsString;
-	std::ofstream fout(SAVED_GAMES_PATH);
-	std::string fileName;
 
-	if (fout) {
-		std::getline(std::cin, fileName);
-		fileName += ".txt";
+	drawGameField();
 
-		fout << fileName << "\n";
+	std::getline(std::wcin, fileName);
+	fileName += L".txt";
+	//deleting whitespaces if needed
+	fileName.erase(remove_if(fileName.begin(), fileName.end(), isspace), fileName.end());
 
+	std::wofstream save(SAVED_GAMES_DIR + L'\\' + fileName);
 
+	if (save) {
+		// saving _halfTurn
+		save << _halfTurn << L'\n';
 
-
-	}
-	fout.close();
-
-
-	std::ifstream fin(SAVED_GAMES_PATH);
-
-	if (fin) {
+		// saving "en passant" actions 
+		//// location of the pawn, that just made en Passant
+		Point secondEnPassantPoint{ BOARD_SIZE, BOARD_SIZE }; // setting point out of the board
 		
-		std::getline(std::wcin, _command);
-
-
-
-		for (int i = 0; i < TOP_SCORE_AMOUNT && !fin.eof(); ++i) {
-			fin >> this->topNScore[i];
+		if (_enPassantFigure) {
+			secondEnPassantPoint = _enPassantFigure->getLocation();
 		}
+		
+		//// _firstEnPassantPoint - square that was skipped by the pawn
+		save << secondEnPassantPoint.x << L' ' << secondEnPassantPoint.y << L'\n'
+			<< _firstEnPassantPoint.x << L' ' << _firstEnPassantPoint.y << L'\n';
+		
+		// saving figures in std::wstring e.g. "WKA21" - white king, location A2, first move - true;
+		for (auto figure : *_whiteArmy) {
+			Point location = figure->getLocation();
+			int xCoord = BOARD_SIZE - location.x;
+			wchar_t yCoord = static_cast<wchar_t>(location.y + 'A');
+
+			save << figure->getFigureName() << yCoord << xCoord << figure->_firstMove << ' ';
+		}
+
+		save << '\n';
+
+		for (auto figure : *_blackArmy) {
+			Point location = figure->getLocation();
+			int xCoord = BOARD_SIZE - location.x;
+			wchar_t yCoord = static_cast<wchar_t>(location.y + 'A');
+
+			save << figure->getFigureName() << yCoord << xCoord << figure->_firstMove << ' ';
+		}
+		
+		_logMessage = SuccessSaveGameString + fileName + L'\n';
 	}
-	fin.close();
+	else {
+		_logMessage = ErrorSaveGameString + fileName + L'\n';
+	}
+	
+	save.close();
 }
 
 
 void Game::loadGame()
 {
-	//need to be implemented
+	// checking whether SavedGames directory exists
+	if (fs::is_directory(SAVED_GAMES_DIR) && fs::is_empty(SAVED_GAMES_DIR)) { // check whether second test is enough
+		_logMessage = ErrorLoadGameString;
+		_moveCompleted = false;
+		return;
+	}
+	
+	std::wstring fileName;
+	_logMessage = ChooseLoadFileString;
+	
+	drawGameField();
+
+	// existing files in SavedGames directory
+	for (auto& files : fs::directory_iterator(SAVED_GAMES_DIR)) {
+		std::wcout << L'\t' << files.path() << L'\n';
+	}
+	std::wcout << L'\t';
+
+	// entering the selected filename
+	std::getline(std::wcin, fileName);
+	fileName += L".txt";
+
+	std::wifstream load(SAVED_GAMES_DIR + L'\\' + fileName);
+
+	if (load) {
+		// deleting existing game data to load saved game
+		clearData();
+
+		// loading _halfTurn
+		load >> _halfTurn;
+		_halfTurn -= 1;
+
+		// loading "en passant" actions 
+		//// location of the pawn, that just made en Passant
+		Point secondEnPassantPoint; 
+		load >> secondEnPassantPoint.x >> secondEnPassantPoint.y;
+		//// _firstEnPassantPoint - square that was skipped by the pawn
+		load >> _firstEnPassantPoint.x >> _firstEnPassantPoint.y;
+		//load.get();
+		//parsing strings into figure's data
+		std::wstring col_type_loc;
+		
+		while (load) {
+			load >> col_type_loc;
+			//std::getline(load, col_type_loc);
+			parseFigureDataString(col_type_loc);
+		}
+
+		//// setting pointer to figure, that has just made en Passant (or nullprt)
+		if (secondEnPassantPoint != Point{ BOARD_SIZE, BOARD_SIZE }) {
+			_enPassantFigure = _board[secondEnPassantPoint.x][secondEnPassantPoint.y];
+		}
+		else {
+			_enPassantFigure = nullptr;
+		}
+	}
+	else {
+		_logMessage = NoSuchLoadFileString + fileName + L'\n';
+		_moveCompleted = false;
+		return;
+	}
+
+	load.close();
+	_logMessage = LoadGameSuccessString + fileName + L'\n';
+	_moveCompleted = true;
 }
 
 
@@ -725,6 +813,7 @@ bool Game::castling(Figure* king, Point currentPosition, Point newPosition)
 bool Game::enPassant(Figure* figureToMove, Point currentPosition, Point newPosition)
 {
 	bool moveIsPossible = false;
+	// location of the pawn, that just made en Passant
 	Point secondEnPassantPoint = _enPassantFigure->getLocation();
 	int delta = currentPosition.y - secondEnPassantPoint.y;
 
@@ -924,6 +1013,57 @@ void Game::deletingFigure(Figure* enemyFigure)
 
 void Game::customGame()
 {
+	// deleting existing game data to customize new game
+	clearData();
+
+	// local variables
+	std::wstring col_type_loc;
+	Point location;
+	_logMessage = EnteringCustomString;
+
+	// main block
+	while (true) {
+		drawGameField();
+		std::getline(std::wcin, col_type_loc);
+
+		// Cheking "QUIT", "DONE" commands
+		if (col_type_loc[0] == L'Q') {
+			newGame();
+			return;
+		}
+		else if (col_type_loc[0] == L'D') {
+			// setting side to make move
+			_logMessage = EnteringCustomString + ChooseSideToMoveString;
+			while (true) {
+				drawGameField();
+				std::getline(std::wcin, col_type_loc);
+				if (col_type_loc[0] == static_cast<wchar_t>(Color::WHITE)) {
+					_halfTurn = 0;
+					break;
+				}
+				else if (col_type_loc[0] == static_cast<wchar_t>(Color::BLACK)) {
+					_halfTurn = 1;
+					break;
+				}
+			}
+			_logMessage = NewCustomGameString;
+			return;
+		}
+
+		// checking parameters for Move instruction, at least 5 symbols are required, e.g. "A2-A4", "B7 B4 "
+		if (col_type_loc.size() < 4) {
+			_logMessage = EnteringCustomString + ErrorDataCustomString;
+			continue;
+		}
+
+		parseFigureDataString(col_type_loc);
+	}
+		
+}
+
+
+void Game::clearData()
+{
 	// resetting armies' bitsets and pawn quantity
 	_bit_whiteArmy.reset();
 	_bit_blackArmy.reset();
@@ -946,248 +1086,212 @@ void Game::customGame()
 			_board[i][j] = nullptr;
 		}
 	}
+}
 
-	// local variables
-	std::wstring col_type_loc;
+
+void Game::parseFigureDataString(std::wstring col_type_loc)
+{
 	Point location;
 	Figure* newFigure = nullptr;
 	Color color;
-	bool WhiteKing = false;
-	bool BlackKing = false;
-	_logMessage = EnteringCustomString;
 
-	// main block
-	while (true) {
-		drawGameField();
-		std::getline(std::wcin, col_type_loc);
+	//setting location, e.g "A8" == Point(0,0),"B3" == Point(5,1)
+	wchar_t capitalLetter = L'A';
+	bool firstCoord = false;
+	bool secondCoord = false;
 
-		// Cheking "QUIT", "DONE" commands
-		if (col_type_loc[0] == L'Q') {
-			newGame();
-			return;
+	for (int i = 0, maxXCoord = BOARD_SIZE - 1; i < BOARD_SIZE; ++i) {
+		if (col_type_loc[2] == capitalLetter) {
+			location.y = i;
+			firstCoord = true;
 		}
-		else if (col_type_loc[0] == L'D') {
-			// checking for presence of two kings
-			if (!WhiteKing || !BlackKing) {
-				_logMessage = EnteringCustomString + ErrorPlaceKingsString;
-				continue;
-			}
-			else {
-				// setting side to make move
-				_logMessage = EnteringCustomString + ChooseSideToMoveString;
-				while (true) {
-					drawGameField();
-					std::getline(std::wcin, col_type_loc);
-					if (col_type_loc[0] == static_cast<wchar_t>(Color::WHITE)) {
-						_halfTurn = 0;
-						break;
-					}
-					else if (col_type_loc[0] == static_cast<wchar_t>(Color::BLACK)) {
-						_halfTurn = 1;
-						break;
-					}
+
+		if (col_type_loc[3] == static_cast<wchar_t>(i + 49)) {
+			location.x = maxXCoord - i;
+			secondCoord = true;
+		}
+		capitalLetter += 1;
+	}
+
+	if (!firstCoord || !secondCoord) {
+		_logMessage = EnteringCustomString + ErrorLocCustomString +
+			col_type_loc.substr(2, 2) + L'\n';
+		return;
+	}
+	else if (_board[location.x][location.y]) {
+		_logMessage = EnteringCustomString + ErrorLocOccupiedCustomString +
+			col_type_loc.substr(2, 2) + L'\n';
+		return;
+	}
+
+	//setting color
+	if (col_type_loc[0] == static_cast<wchar_t>(Color::WHITE)) {
+		color = Color::WHITE;
+
+		//setting type, creating new figure, adding figure to white army and setting army's bitset
+		switch (col_type_loc[1]) {
+			case static_cast<wchar_t>(Type::KING) :
+				newFigure = new F_King(color, location);
+				_whiteArmy->insert(newFigure);
+				_WKing = newFigure;
+				break;
+					
+			case static_cast<wchar_t>(Type::QUEEN) :
+				newFigure = new F_Queen(color, location);
+				_whiteArmy->insert(newFigure);
+
+				if (_bit_whiteArmy.test(bit_F_Queen1)) {
+					_bit_whiteArmy.set(bit_F_Queen2);
 				}
-				_logMessage = NewCustomGameString;
+				else {
+					_bit_whiteArmy.set(bit_F_Queen1);
+				}
+				break;
+
+			case static_cast<wchar_t>(Type::BISHOP) :
+				newFigure = new F_Bishop(color, location);
+				_whiteArmy->insert(newFigure);
+
+				if ((location.x + location.y) % 2) {
+					_bit_whiteArmy.set(bit_F_Bishop1);
+				}
+				else {
+					_bit_whiteArmy.set(bit_F_Bishop2);
+				}
+				break;
+
+			case static_cast<wchar_t>(Type::KNIGHT) :
+				newFigure = new F_Knight(color, location);
+				_whiteArmy->insert(newFigure);
+
+				if (_bit_whiteArmy.test(bit_F_Knight1)) {
+					_bit_whiteArmy.set(bit_F_Knight2);
+				}
+				else {
+					_bit_whiteArmy.set(bit_F_Knight1);
+				}
+				break;
+
+			case static_cast<wchar_t>(Type::ROOK) :
+				newFigure = new F_Rook(color, location);
+				_whiteArmy->insert(newFigure);
+
+				if (_bit_whiteArmy.test(bit_F_Rook1)) {
+					_bit_whiteArmy.set(bit_F_Rook2);
+					}
+				else {
+					_bit_whiteArmy.set(bit_F_Rook1);
+				}
+				break;
+
+			case static_cast<wchar_t>(Type::PAWN) :
+				newFigure = new F_Pawn(color, location);
+				_whiteArmy->insert(newFigure);
+				break;
+
+			default:
+				_logMessage = EnteringCustomString + ErrorTypeCustomString +
+					col_type_loc.substr(0, 2) + L'\n';
 				return;
-			}			
 		}
 
-		// checking parameters for Move instruction, at least 5 symbols are required, e.g. "A2-A4", "B7 B4 "
-		if (col_type_loc.size() < 4) {
-			_logMessage = EnteringCustomString + ErrorDataCustomString;
-			continue;
-		}
-
-		//setting location, e.g "A8" == Point(0,0),"B3" == Point(5,1)
-		wchar_t capitalLetter = L'A';
-		bool firstCoord = false;
-		bool secondCoord = false;
-
-		for (int i = 0, j = BOARD_SIZE - 1; i < BOARD_SIZE; ++i) {
-			if (col_type_loc[2] == capitalLetter) {
-				location.y = i;
-				firstCoord = true;
-			}
-
-			if (col_type_loc[3] == static_cast<wchar_t>(i + 49)) {
-				location.x = j - i;
-				secondCoord = true;
-			}
-			capitalLetter += 1;
-		}
-
-		if (!firstCoord || !secondCoord) {
-			_logMessage = EnteringCustomString + ErrorLocCustomString +
-				col_type_loc.substr(2, 2) + L'\n';
-			continue;
-		}
-		else if (_board[location.x][location.y]) {
-			_logMessage = EnteringCustomString + ErrorLocOccupiedCustomString +
-				col_type_loc.substr(2, 2) + L'\n';
-			continue;
-		}
-
-		//setting color
-		if (col_type_loc[0] == static_cast<wchar_t>(Color::WHITE)) {
-			color = Color::WHITE;
-
-			//setting type, creating new figure, adding figure to white army and setting army's bitset
-			switch (col_type_loc[1]) {
-				case static_cast<wchar_t>(Type::KING) :
-					newFigure = new F_King(color, location);
-					_whiteArmy->insert(newFigure);
-
-					WhiteKing = true;
-					_WKing = newFigure;
-					break;
-					
-				case static_cast<wchar_t>(Type::QUEEN) :
-					newFigure = new F_Queen(color, location);
-					_whiteArmy->insert(newFigure);
-
-					if (_bit_whiteArmy.test(bit_F_Queen1)) {
-						_bit_whiteArmy.set(bit_F_Queen2);
-					}
-					else {
-						_bit_whiteArmy.set(bit_F_Queen1);
-					}
-					break;
-
-				case static_cast<wchar_t>(Type::BISHOP) :
-					newFigure = new F_Bishop(color, location);
-					_whiteArmy->insert(newFigure);
-
-					if ((location.x + location.y) % 2) {
-						_bit_whiteArmy.set(bit_F_Bishop1);
-					}
-					else {
-						_bit_whiteArmy.set(bit_F_Bishop2);
-					}
-					break;
-
-				case static_cast<wchar_t>(Type::KNIGHT) :
-					newFigure = new F_Knight(color, location);
-					_whiteArmy->insert(newFigure);
-
-					if (_bit_whiteArmy.test(bit_F_Knight1)) {
-						_bit_whiteArmy.set(bit_F_Knight2);
-					}
-					else {
-						_bit_whiteArmy.set(bit_F_Knight1);
-					}
-					break;
-
-				case static_cast<wchar_t>(Type::ROOK) :
-					newFigure = new F_Rook(color, location);
-					_whiteArmy->insert(newFigure);
-
-					if (_bit_whiteArmy.test(bit_F_Rook1)) {
-						_bit_whiteArmy.set(bit_F_Rook2);
-					}
-					else {
-						_bit_whiteArmy.set(bit_F_Rook1);
-					}
-					break;
-
-				case static_cast<wchar_t>(Type::PAWN) :
-					newFigure = new F_Pawn(color, location);
-					_whiteArmy->insert(newFigure);
-					break;
-
-				default:
-					_logMessage = EnteringCustomString + ErrorTypeCustomString +
-						col_type_loc.substr(0, 2) + L'\n';
-					continue;
-			}
-		}
-		else if (col_type_loc[0] == static_cast<wchar_t>(Color::BLACK)) {
-			color = Color::BLACK;
-
-			//setting type, creating new figure, adding figure to black army and setting army's bitset
-			switch (col_type_loc[1]) {
-				case static_cast<wchar_t>(Type::KING) :
-					newFigure = new F_King(color, location);
-					_blackArmy->insert(newFigure);
-
-					BlackKing = true;
-					_BKing = newFigure;
-					break;
-					
-				case static_cast<wchar_t>(Type::QUEEN) :
-					newFigure = new F_Queen(color, location);
-					_blackArmy->insert(newFigure);
-
-					if (_bit_blackArmy.test(bit_F_Queen1)) {
-						_bit_blackArmy.set(bit_F_Queen2);
-					}
-					else {
-						_bit_blackArmy.set(bit_F_Queen1);
-					}
-					break;
-
-				case static_cast<wchar_t>(Type::BISHOP) :
-					newFigure = new F_Bishop(color, location);
-					_blackArmy->insert(newFigure);
-
-					if ((location.x + location.y) % 2) {
-						_bit_blackArmy.set(bit_F_Bishop1);
-					}
-					else {
-						_bit_blackArmy.set(bit_F_Bishop2);
-					}
-					break;
-
-				case static_cast<wchar_t>(Type::KNIGHT) :
-					newFigure = new F_Knight(color, location);
-					_blackArmy->insert(newFigure);
-
-					if (_bit_blackArmy.test(bit_F_Knight1)) {
-						_bit_blackArmy.set(bit_F_Knight2);
-					}
-					else {
-						_bit_blackArmy.set(bit_F_Knight1);
-					}
-					break;
-
-				case static_cast<wchar_t>(Type::ROOK) :
-					newFigure = new F_Rook(color, location);
-					_blackArmy->insert(newFigure);
-
-					if (_bit_blackArmy.test(bit_F_Rook1)) {
-						_bit_blackArmy.set(bit_F_Rook2);
-					}
-					else {
-						_bit_blackArmy.set(bit_F_Rook1);
-					}
-					break;
-
-				case static_cast<wchar_t>(Type::PAWN) :
-					newFigure = new F_Pawn(color, location);
-					_blackArmy->insert(newFigure);
-					_pawnQuantity += 1;
-					break;
-
-				default:
-					_logMessage = EnteringCustomString + ErrorTypeCustomString +
-						col_type_loc.substr(0, 2) + L'\n';
-					continue;
-			}
-		}
-		else {
-			_logMessage = EnteringCustomString + ErrorColorCustomString +
-			col_type_loc.substr(0, 2) + L'\n';
-			continue;
+		//setting first move state
+		if (col_type_loc[4] != L'1') {
+			newFigure->_firstMove = false;
 		}
 
 		_board[location.x][location.y] = newFigure;
 
+		_logMessage = EnteringCustomString + FigureIsPlacedString +
+			col_type_loc.substr(0, 4) + L'\n';
+		return;
+	}
+	else if (col_type_loc[0] == static_cast<wchar_t>(Color::BLACK)) {
+		color = Color::BLACK;
+
+		//setting type, creating new figure, adding figure to black army and setting army's bitset
+		switch (col_type_loc[1]) {
+			case static_cast<wchar_t>(Type::KING) :
+				newFigure = new F_King(color, location);
+				_blackArmy->insert(newFigure);
+				_BKing = newFigure;
+				break;
+					
+			case static_cast<wchar_t>(Type::QUEEN) :
+				newFigure = new F_Queen(color, location);
+				_blackArmy->insert(newFigure);
+
+				if (_bit_blackArmy.test(bit_F_Queen1)) {
+					_bit_blackArmy.set(bit_F_Queen2);
+				}
+				else {
+					_bit_blackArmy.set(bit_F_Queen1);
+				}
+				break;
+
+			case static_cast<wchar_t>(Type::BISHOP) :
+				newFigure = new F_Bishop(color, location);
+				_blackArmy->insert(newFigure);
+
+				if ((location.x + location.y) % 2) {
+					_bit_blackArmy.set(bit_F_Bishop1);
+				}
+				else {
+					_bit_blackArmy.set(bit_F_Bishop2);
+				}
+				break;
+
+			case static_cast<wchar_t>(Type::KNIGHT) :
+				newFigure = new F_Knight(color, location);
+				_blackArmy->insert(newFigure);
+
+				if (_bit_blackArmy.test(bit_F_Knight1)) {
+					_bit_blackArmy.set(bit_F_Knight2);
+				}
+				else {
+					_bit_blackArmy.set(bit_F_Knight1);
+				}
+				break;
+
+			case static_cast<wchar_t>(Type::ROOK) :
+				newFigure = new F_Rook(color, location);
+				_blackArmy->insert(newFigure);
+
+				if (_bit_blackArmy.test(bit_F_Rook1)) {
+					_bit_blackArmy.set(bit_F_Rook2);
+				}
+				else {
+					_bit_blackArmy.set(bit_F_Rook1);
+				}
+				break;
+
+			case static_cast<wchar_t>(Type::PAWN) :
+				newFigure = new F_Pawn(color, location);
+				_blackArmy->insert(newFigure);
+				_pawnQuantity += 1;
+				break;
+
+			default:
+				_logMessage = EnteringCustomString + ErrorTypeCustomString +
+					col_type_loc.substr(0, 2) + L'\n';
+				break;
+		}
+
 		//setting first move state
-		if (col_type_loc[5] != L'1') {
+		if (col_type_loc[4] != L'1') {
 			newFigure->_firstMove = false;
 		}
 
+		_board[location.x][location.y] = newFigure;
+
 		_logMessage = EnteringCustomString + FigureIsPlacedString +
 			col_type_loc.substr(0, 4) + L'\n';
+		return;
+	}
+	else {
+		_logMessage = EnteringCustomString + ErrorColorCustomString +
+		col_type_loc.substr(0, 2) + L'\n';
+		return;
 	}
 }
 

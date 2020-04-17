@@ -39,7 +39,7 @@ namespace DEF_SETT {
 	const int PAWN_QUANTITY = 16;
 	
 	// Saved games path
-	const char SAVED_GAMES_PATH[] = "SavedGames.txt";
+	const std::wstring SAVED_GAMES_DIR = L"SavedGames";
 
 	// "a  b  c  d  e  f  g  h" string
 	const wchar_t ABCDEFGH_STRING[] = L"   a  b  c  d  e  f  g  h\n";
@@ -58,7 +58,7 @@ namespace DEF_SETT {
 
 	// "Black's move" string
 	const wchar_t COMMANDS_STRING[] = 
-		L"Commands: (N)ew, (L)oad, (S)ave, (C)ustom,\n\t  Move e.g.: (A4 A5)\n";
+		L"Commands: (N)ew, (L)oad, (S)ave, (C)ustomize,\n\t  Move e.g.: (A4 A5)\n";
 
 	// "Black's move" string
 	const wchar_t ENTER_COMMAND_STRING[] = L"Enter command: ";
@@ -97,7 +97,13 @@ namespace DEF_SETT {
 	const std::wstring ErrorTypeCustomString = L"Invalid parameter for type of the figure: ";
 	const std::wstring ErrorColorCustomString = L"Invalid parameter for color of the figure: ";
 	const std::wstring FigureIsPlacedString = L"Figure is placed: ";
-	const std::wstring SaveGameAsString = L"Save as (_.txt): ";
+	const std::wstring SaveGameAsString = L"Save as: ";
+	const std::wstring SuccessSaveGameString = L"File saved as: ";
+	const std::wstring ErrorSaveGameString = L"Error create file: ";
+	const std::wstring ErrorLoadGameString = L"No files to load\n";
+	const std::wstring ChooseLoadFileString = L"Choose file (print name without .txt):\n";
+	const std::wstring NoSuchLoadFileString = L"No such file in directory: ";
+	const std::wstring LoadGameSuccessString = L"Successfully loaded: ";
 
 	//const std::wstring ChooseSideToMoveSetString = L"Choose side to move: W / B ?\n";
 

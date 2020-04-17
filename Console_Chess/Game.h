@@ -5,6 +5,9 @@
 #include <unordered_set>
 #include <bitset>
 #include <fstream>
+#include <algorithm>
+#include <filesystem>
+namespace fs = std::filesystem;
 
 #include "Specification.h"
 #include "Figure.h"
@@ -90,6 +93,10 @@ private:
 	void deletingFigure(Figure* enemyFigure);
 
 	void customGame(); // create new Game with certain positions of figures
+
+	void clearData(); // deleting existing game data to load saved game / customize new game
+
+	void parseFigureDataString(std::wstring col_type_loc); //parsing string into figure's data
 
 
 public:
