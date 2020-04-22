@@ -149,6 +149,19 @@ Game::Game()
 	this->_whiteArmy = new std::unordered_set<Figure*>();
 	this->_blackArmy = new std::unordered_set<Figure*>();
 	
+	// Setting console font
+	CONSOLE_FONT_INFOEX cfi;
+	cfi.cbSize = sizeof(cfi);
+	cfi.nFont = 0;
+	cfi.dwFontSize.X = 10;
+	cfi.dwFontSize.Y = 16;
+	cfi.FontFamily = FF_DONTCARE;
+	cfi.FontWeight = FW_NORMAL;
+	wcscpy_s(cfi.FaceName, L"Lucida Console");
+	if (!SetCurrentConsoleFontEx(GetStdHandle(STD_OUTPUT_HANDLE), FALSE, &cfi)) {
+		std::cout << "SetCurrentConsoleFontEx failed with error " << GetLastError() << std::endl;
+	}
+
 	initialSetup();
 }
 
@@ -222,7 +235,6 @@ void Game::drawGameField()
 
 	// showing notifications
 	std::wcout << _logMessage;
-
 }
 
 
@@ -283,6 +295,7 @@ bool Game::isCheckmate()
 
 	// Game Over
 	_logMessage += ErrorCheckmateString;
+
 	return true;
 }
 
@@ -524,6 +537,7 @@ void Game::loadGame()
 	if (fs::is_directory(SAVED_GAMES_DIR) && fs::is_empty(SAVED_GAMES_DIR)) { // check whether second test is enough
 		_logMessage = ErrorLoadGameString;
 		_moveCompleted = false;
+
 		return;
 	}
 	
@@ -532,7 +546,7 @@ void Game::loadGame()
 	
 	drawGameField();
 
-	// existing files in SavedGames directory
+	// outputing existing files in SavedGames directory
 	for (auto& files : fs::directory_iterator(SAVED_GAMES_DIR)) {
 		std::wcout << L'\t' << files.path() << L'\n';
 	}
@@ -543,7 +557,6 @@ void Game::loadGame()
 	fileName += L".txt";
 
 	std::wifstream load(SAVED_GAMES_DIR + L'\\' + fileName);
-
 	if (load) {
 		// deleting existing game data to load saved game
 		clearData();
@@ -568,7 +581,7 @@ void Game::loadGame()
 			parseFigureDataString(col_type_loc);
 		}
 
-		//// setting pointer to figure, that has just made en Passant (or nullprt)
+		//// setting pointer to figure, that has just made en Passant (or to nullprt)
 		if (secondEnPassantPoint != Point{ BOARD_SIZE, BOARD_SIZE }) {
 			_enPassantFigure = _board[secondEnPassantPoint.x][secondEnPassantPoint.y];
 		}
@@ -1187,6 +1200,7 @@ void Game::parseFigureDataString(std::wstring col_type_loc)
 			case static_cast<wchar_t>(Type::PAWN) :
 				newFigure = new F_Pawn(color, location);
 				_whiteArmy->insert(newFigure);
+				_pawnQuantity += 1;
 				break;
 
 			default:
@@ -1335,4 +1349,135 @@ void Game::gameLoop()
 	}
 
 	drawGameField();
+}
+
+
+// getters for testing
+
+const Figure* Game::getBoard(Point point) const
+{
+	return _board[point.x][point.y];
+}
+
+const std::unordered_set<Figure*>* Game::getWhiteArmy() const
+{
+	return _whiteArmy;
+}
+
+const std::unordered_set<Figure*>* Game::getBlackArmy() const
+{
+	return _blackArmy;
+}
+
+const std::bitset<BOARD_SIZE>& Game::getWArmyBit() const
+{
+	return _bit_whiteArmy;
+}
+
+const std::bitset<BOARD_SIZE>& Game::getBArmyBit() const
+{
+	return _bit_blackArmy;
+}
+
+const std::unordered_set<Figure*>* Game::getCurrentArmy() const
+{
+	return _currentArmy;
+}
+
+const std::unordered_set<Figure*>* Game::getEnemyArmy() const
+{
+	return _enemyArmy;
+}
+
+const Figure* Game::getEnPassantFigure() const
+{
+	return _enPassantFigure;
+}
+
+const Point Game::getFirstEnPassantPoint() const
+{
+	return _firstEnPassantPoint;
+}
+
+const int Game::getHalfTurn() const
+{
+	return _halfTurn;
+}
+
+const bool Game::getCHECKStatus() const
+{
+	return _CHECK;
+}
+
+const bool Game::getGameOverStatus() const
+{
+	return _gameOver;
+}
+
+const bool Game::getMoveCompletedStatus() const
+{
+	return _moveCompleted;
+}
+
+const std::wstring& Game::getCurrentCommand() const
+{
+	return _command;
+}
+
+const std::wstring& Game::getLogMessage() const
+{
+	return _logMessage;
+}
+
+
+// create new custom Game from string, for testing
+
+void Game::loadGameDataString(std::wstring dataString)
+{
+	std::wistringstream load(dataString);
+	
+	// deleting existing game data to load saved game
+	clearData();
+
+	// loading _halfTurn
+	load >> _halfTurn;
+	//_halfTurn -= 1;
+
+	// loading "en passant" actions 
+	//// location of the pawn, that just made en Passant
+	Point secondEnPassantPoint;
+	load >> secondEnPassantPoint.x >> secondEnPassantPoint.y;
+	//// _firstEnPassantPoint - square that was skipped by the pawn
+	load >> _firstEnPassantPoint.x >> _firstEnPassantPoint.y;
+	//load.get();
+	//parsing strings into figure's data
+	std::wstring col_type_loc;
+
+	while (load) {
+		load >> col_type_loc;
+		//std::getline(load, col_type_loc);
+		parseFigureDataString(col_type_loc);
+	}
+
+	// setting pointers for quick access
+	if (_halfTurn % 2) {
+		_currentArmy = _whiteArmy;
+		_enemyArmy = _blackArmy;
+		_activeKing = _WKing;
+	}
+	else {
+		_currentArmy = _blackArmy;
+		_enemyArmy = _whiteArmy;
+		_activeKing = _BKing;
+	}
+
+	//// setting pointer to figure, that has just made en Passant (or nullprt)
+	if (secondEnPassantPoint != Point{ BOARD_SIZE, BOARD_SIZE }) {
+		_enPassantFigure = _board[secondEnPassantPoint.x][secondEnPassantPoint.y];
+	}
+	else {
+		_enPassantFigure = nullptr;
+	}
+	
+	_moveCompleted = true;
 }

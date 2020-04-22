@@ -5,9 +5,11 @@
 #include <unordered_set>
 #include <bitset>
 #include <fstream>
+#include <sstream>
 #include <algorithm>
-#include <filesystem>
+#include <filesystem> // creating directory for Saved Games and loading file with saved data
 namespace fs = std::filesystem;
+#include <Windows.h> // Setting console font
 
 #include "Specification.h"
 #include "Figure.h"
@@ -47,7 +49,7 @@ private:
 	Figure* _enPassantFigure; // pawn that just made en Passant
 	Point _firstEnPassantPoint; // square that was skipped
 
-	int _halfTurn; // game turns * 2
+	int _halfTurn; // game turns: halfTurn * 2
 	bool _CHECK;
 	bool _gameOver;
 	bool _moveCompleted;
@@ -60,32 +62,25 @@ private:
 
 	void drawGameField();
 
-	////logicBlock1:
+	////logicBlock2:
 
-	bool isCheck();
-
-	bool isCheckmate();
-
-	bool isDraw();
-
-	
 	void input(); // handling instructions
 
-	////logicBlock2:
 	void newGame();
 
-	void saveGame(); // need to be implemented
+	void saveGame();
 
-	void loadGame(); // need to be implemented
+	void loadGame();
 
 	////logicBlock3:
+
 	void mainLogic(Point currentPosition, Point newPosition);
 
 	bool castling(Figure* king, Point currentPosition, Point newPosition);
 
 	bool enPassant(Figure* figureToMove, Point currentPosition, Point newPosition);
 
-	//// checking if move cause check for the king
+	//// checking if move cause CHECK for the king
 	bool isKingInDanger(Figure* figureToMove, Point currentPosition, Point newPosition);
 
 	void promotion(Figure* figureToMove, Point newPosition);
@@ -105,5 +100,64 @@ public:
 
 	// methods
 	void gameLoop();
+
+	////logicBlock1:
+
+	bool isCheck();
+
+	bool isCheckmate();
+
+	bool isDraw();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	// getters for testing
+	const Figure* getBoard(Point point) const;
+	const std::unordered_set<Figure*>* getWhiteArmy() const;
+	const std::unordered_set<Figure*>* getBlackArmy() const;
+	const std::bitset<BOARD_SIZE>& getWArmyBit() const;
+	const std::bitset<BOARD_SIZE>& getBArmyBit() const;
+	const std::unordered_set<Figure*>* getCurrentArmy() const;
+	const std::unordered_set<Figure*>* getEnemyArmy() const;
+	const Figure* getEnPassantFigure() const;
+	const Point getFirstEnPassantPoint() const;
+	const int getHalfTurn() const;
+	const bool getCHECKStatus() const;
+	const bool getGameOverStatus() const;
+	const bool getMoveCompletedStatus() const;
+	const std::wstring& getCurrentCommand() const;
+	const std::wstring& getLogMessage() const;
+
+	// create new custom Game from string, for testing
+	void loadGameDataString(std::wstring dataString);
+
+
+
+
+
+	
+
+
+
+
+
+
+
+
 };
 

@@ -56,11 +56,11 @@ namespace DEF_SETT {
 	// "Black's move" string
 	const wchar_t BLACK_MOVE_STRING[] = L"Current turn: BLACK\n";
 
-	// "Black's move" string
+	// "Commands" string
 	const wchar_t COMMANDS_STRING[] = 
 		L"Commands: (N)ew, (L)oad, (S)ave, (C)ustomize,\n\t  Move e.g.: (A4 A5)\n";
 
-	// "Black's move" string
+	// "Enter command" string
 	const wchar_t ENTER_COMMAND_STRING[] = L"Enter command: ";
 
 	// Log Messages

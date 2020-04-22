@@ -5,6 +5,8 @@ VisualStudioVersion = 16.0.29926.136
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Console_Chess", "Console_Chess\Console_Chess.vcxproj", "{E567FE00-D481-4948-B718-40FA109D4813}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ChessUnitGoogleTest", "ChessUnitGoogleTest\ChessUnitGoogleTest.vcxproj", "{7F123C6C-0B4A-4FD6-8C4E-0F09615B0910}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -21,6 +23,14 @@ Global
 		{E567FE00-D481-4948-B718-40FA109D4813}.Release|x64.Build.0 = Release|x64
 		{E567FE00-D481-4948-B718-40FA109D4813}.Release|x86.ActiveCfg = Release|Win32
 		{E567FE00-D481-4948-B718-40FA109D4813}.Release|x86.Build.0 = Release|Win32
+		{7F123C6C-0B4A-4FD6-8C4E-0F09615B0910}.Debug|x64.ActiveCfg = Debug|x64
+		{7F123C6C-0B4A-4FD6-8C4E-0F09615B0910}.Debug|x64.Build.0 = Debug|x64
+		{7F123C6C-0B4A-4FD6-8C4E-0F09615B0910}.Debug|x86.ActiveCfg = Debug|Win32
+		{7F123C6C-0B4A-4FD6-8C4E-0F09615B0910}.Debug|x86.Build.0 = Debug|Win32
+		{7F123C6C-0B4A-4FD6-8C4E-0F09615B0910}.Release|x64.ActiveCfg = Release|x64
+		{7F123C6C-0B4A-4FD6-8C4E-0F09615B0910}.Release|x64.Build.0 = Release|x64
+		{7F123C6C-0B4A-4FD6-8C4E-0F09615B0910}.Release|x86.ActiveCfg = Release|Win32
+		{7F123C6C-0B4A-4FD6-8C4E-0F09615B0910}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
