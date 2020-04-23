@@ -1,4 +1,5 @@
 #pragma once
+
 #include <string>
 #include <vector>
 
@@ -23,8 +24,8 @@ public:
 
 	// methods
 
-	// pure virtual method, returns vector of figure's possible moves, 
-	// considering situation on the board
+	//// pure virtual method, returns vector of figure's possible moves, 
+	//// considering situation on the board
 	virtual std::vector<Point>* getPossibleMoves(Figure*** board) = 0;
 
 	////getters

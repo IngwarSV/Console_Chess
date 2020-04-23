@@ -69,9 +69,7 @@ namespace DEF_SETT {
 	const std::wstring ErrorInvalidPos1 = L"Invalid parameter for current position of figure: ";
 	const std::wstring ErrorInvalidPos2 = L"Invalid parameter for new position of figure: ";
 	const std::wstring ErrorInvalidPos3 = L"No figure in your set on the position: ";
-	const std::wstring ErrorCastlingString = L"Can't execute castling: ";
 	const std::wstring CastlingPerfomed = L"Castling executed: ";
-	const std::wstring ErrorenPassantString = L"Can't execute enPassant: ";
 	const std::wstring enPassantPerformedString = L"enPassant executed: ";
 	const std::wstring ErrorMoveIsIllegal = L"Figure can't move: ";
 	const std::wstring PreviousMoveString = L"Previous move: ";
@@ -104,8 +102,6 @@ namespace DEF_SETT {
 	const std::wstring ChooseLoadFileString = L"Choose file (print name without .txt):\n";
 	const std::wstring NoSuchLoadFileString = L"No such file in directory: ";
 	const std::wstring LoadGameSuccessString = L"Successfully loaded: ";
-
-	//const std::wstring ChooseSideToMoveSetString = L"Choose side to move: W / B ?\n";
 
 	// Figures' starting positions
 

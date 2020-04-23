@@ -37,22 +37,10 @@ void Game::initialSetup()
 	for (int i = 1; i < fieldEdge; ++i) {
 		for (int j = 1; j < fieldEdge; ++j) {
 			if (i % 2) {
-				if (j % 2) {
-					_totalGameField[i][j] = L"  ";
-					
-				}
-				else {
-					_totalGameField[i][j] = L"\u2502";
-					
-				}
+				_totalGameField[i][j] = (j % 2) ? L"  " : L"\u2502";
 			}
 			else {
-				if (j % 2) {
-					_totalGameField[i][j] = L"\u2500\u2500";
-				}
-				else {
-					_totalGameField[i][j] = L"\u253C";
-				}
+				_totalGameField[i][j] = (j % 2) ? L"\u2500\u2500" : L"\u253C";
 			}
 		}
 	}
@@ -119,7 +107,7 @@ void Game::initialSetup()
 	_enemyArmy = _blackArmy;
 
 	// for "en passant" actions 
-	_enPassantFigure = nullptr; // pawn that just made en Passant
+	_enPassantFigure = nullptr; // pawn that just made two-squares move
 	_firstEnPassantPoint = Point{ BOARD_SIZE, BOARD_SIZE }; // setting point out of the board
 	_halfTurn = 0;
 	_CHECK = false;
@@ -193,17 +181,55 @@ Game::~Game()
 }
 
 
+void Game::gameLoop()
+{
+	while (!_gameOver) {
+		_halfTurn += 1;
+
+		// updating pointers for quick access
+		if (_halfTurn % 2) {
+			_currentArmy = _whiteArmy;
+			_enemyArmy = _blackArmy;
+			_activeKing = _WKing;
+		}
+		else {
+			_currentArmy = _blackArmy;
+			_enemyArmy = _whiteArmy;
+			_activeKing = _BKing;
+		}
+
+		if (isCheck()) {
+			_CHECK = true;
+			if (isCheckmate()) {
+				_gameOver = true;
+				_moveCompleted = true;
+			}
+		}
+		else if (isDraw()) {
+			_gameOver = true;
+			_moveCompleted = true;
+		}
+
+		while (!_moveCompleted) {
+			drawGameField();
+			input();
+		}
+
+		_moveCompleted = false;
+
+	}
+
+	drawGameField();
+}
+
+
 void Game::drawGameField()
 {
 	// updating totalGameField considering situation on the board
 	for (int i = 1, k = 0; i < GAME_FIELD_SIZE; i += 2, k += 1) {
 		for (int j = 1, l = 0; j < GAME_FIELD_SIZE; j += 2, l += 1) {
-			if (_board[k][l]) {
-				_totalGameField[i][j] = _board[k][l]->getFigureName();
-			}
-			else {
-				_totalGameField[i][j] = L"  ";
-			}
+			_totalGameField[i][j] = (_board[k][l]) ?
+				_board[k][l]->getFigureName() : L"  ";
 		}
 		std::wcout << L'\n';
 	}
@@ -226,12 +252,8 @@ void Game::drawGameField()
 	
 	std::wcout << COMMANDS_STRING;
 	
-	if (_halfTurn % 2) {
-		std::wcout << WHITE_MOVE_STRING;
-	}
-	else {
-		std::wcout << BLACK_MOVE_STRING;
-	}
+	(_halfTurn % 2) ? 
+		std::wcout << WHITE_MOVE_STRING : std::wcout << BLACK_MOVE_STRING;
 
 	// showing notifications
 	std::wcout << _logMessage;
@@ -266,6 +288,7 @@ bool Game::isCheckmate()
 	for (auto possiblePosition : *v_possibleMoves) {
 		if (!isKingInDanger(_activeKing, kingLocation, possiblePosition)) {
 			_logMessage += ErrorCheckString;
+
 			return false;
 		}
 	}
@@ -280,6 +303,7 @@ bool Game::isCheckmate()
 		for (auto possiblePosition : *v_possibleMoves) {
 			if (!isKingInDanger(figure, figureLocation, possiblePosition)) {
 				_logMessage += ErrorCheckString;
+
 				return false;
 			}
 		}
@@ -288,6 +312,7 @@ bool Game::isCheckmate()
 		if (figure->getType() == Type::PAWN && _enPassantFigure) {
 			if (enPassant(figure, figure->getLocation(), _firstEnPassantPoint)) {
 				_logMessage += ErrorCheckString;
+
 				return false;
 			}
 		}
@@ -312,6 +337,7 @@ bool Game::isDraw()
 		for (auto possiblePosition : *v_possibleMoves) {
 			if (!isKingInDanger(figure, figureLocation, possiblePosition)) {
 				hasLegalMove = true;
+
 				break;
 			}
 		}
@@ -320,6 +346,7 @@ bool Game::isDraw()
 		if (figure->getType() == Type::PAWN && _enPassantFigure && !hasLegalMove) {
 			if (enPassant(figure, figure->getLocation(), _firstEnPassantPoint)) {
 				hasLegalMove = true;
+
 				break;
 			}
 		}
@@ -327,6 +354,7 @@ bool Game::isDraw()
 
 	if (!hasLegalMove) {
 		_logMessage = DrawStalemateString;
+
 		return true;
 	}
 
@@ -341,18 +369,21 @@ bool Game::isDraw()
 	//// two kings left (there is no bit for kings in the bitsets)
 	if (!_bit_temp.to_ulong()) {
 		_logMessage = impossibleCheckmate1;
+
 		return true;
 	}
 
 	//// king with/without bishop versus king and bishop(bishops) on the same color
 	if (_bit_temp.to_ulong() == 4Ul || _bit_temp.to_ulong() == 8Ul) {
 		_logMessage = impossibleCheckmate2;
+
 		return true;
 	}
 
 	//// king and knight versus king
 	if (_bit_temp.to_ulong() == 1Ul && _bit_whiteArmy != _bit_blackArmy) {
 		_logMessage = impossibleCheckmate3;
+
 		return true;
 	}
 
@@ -363,34 +394,39 @@ bool Game::isDraw()
 void Game::input()
 {
 	std::wcout << ENTER_COMMAND_STRING;
+
 	std::getline(std::wcin, _command);
 
-	// Cheking "New Game", "Load Game", "Save Game" commands
+	// Cheking "New Game", "Load Game", "Save Game", "Custom Game" commands
 	if (_command[0] == L'N') {
 		newGame();
 		_moveCompleted = true;
+
 		return;
 	}
 	if (_command[0] == L'L') {
 		loadGame();
+
 		return;
 	}
 	if (_command[0] == L'S') {
 		saveGame();
 		_moveCompleted = false;
+
 		return;
 	}
 	if (_command.substr(0, 3) == L"C") {
 		customGame();
 		_moveCompleted = true;
+
 		return;
 	}
 
 	// checking parameters for Move instruction, at least 5 symbols are required, e.g. "A2-A4", "B7 B4 "
 	if (_command.size() < 5) {
 		_moveCompleted = false;
-		
 		_logMessage = ErrorInvalidMoveParam + _command + L'\n';
+
 		return;
 	}
 
@@ -445,6 +481,7 @@ void Game::input()
 	if (flag1 || flag2) {
 		_moveCompleted = false;
 		_logMessage = ErrorInvalidPos2 + _command.substr(3,2) + L'\n';
+
 		return;
 	}
 
@@ -480,6 +517,7 @@ void Game::saveGame()
 	drawGameField();
 
 	std::getline(std::wcin, fileName);
+
 	fileName += L".txt";
 	//deleting whitespaces if needed
 	fileName.erase(remove_if(fileName.begin(), fileName.end(), isspace), fileName.end());
@@ -491,7 +529,7 @@ void Game::saveGame()
 		save << _halfTurn << L'\n';
 
 		// saving "en passant" actions 
-		//// location of the pawn, that just made en Passant
+		//// location of the pawn, that just made two-square move
 		Point secondEnPassantPoint{ BOARD_SIZE, BOARD_SIZE }; // setting point out of the board
 		
 		if (_enPassantFigure) {
@@ -534,7 +572,7 @@ void Game::saveGame()
 void Game::loadGame()
 {
 	// checking whether SavedGames directory exists
-	if (fs::is_directory(SAVED_GAMES_DIR) && fs::is_empty(SAVED_GAMES_DIR)) { // check whether second test is enough
+	if (!fs::is_directory(SAVED_GAMES_DIR) || fs::is_empty(SAVED_GAMES_DIR)) {
 		_logMessage = ErrorLoadGameString;
 		_moveCompleted = false;
 
@@ -566,12 +604,12 @@ void Game::loadGame()
 		_halfTurn -= 1;
 
 		// loading "en passant" actions 
-		//// location of the pawn, that just made en Passant
+		//// location of the pawn, that just made two-squares move
 		Point secondEnPassantPoint; 
 		load >> secondEnPassantPoint.x >> secondEnPassantPoint.y;
 		//// _firstEnPassantPoint - square that was skipped by the pawn
 		load >> _firstEnPassantPoint.x >> _firstEnPassantPoint.y;
-		//load.get();
+
 		//parsing strings into figure's data
 		std::wstring col_type_loc;
 		
@@ -581,17 +619,14 @@ void Game::loadGame()
 			parseFigureDataString(col_type_loc);
 		}
 
-		//// setting pointer to figure, that has just made en Passant (or to nullprt)
-		if (secondEnPassantPoint != Point{ BOARD_SIZE, BOARD_SIZE }) {
-			_enPassantFigure = _board[secondEnPassantPoint.x][secondEnPassantPoint.y];
-		}
-		else {
-			_enPassantFigure = nullptr;
-		}
+		//// setting pointer to figure, that has just made two-squares move (or to nullprt)
+		_enPassantFigure = (secondEnPassantPoint != Point{ BOARD_SIZE, BOARD_SIZE }) ?
+			_board[secondEnPassantPoint.x][secondEnPassantPoint.y] : nullptr;
 	}
 	else {
 		_logMessage = NoSuchLoadFileString + fileName + L'\n';
 		_moveCompleted = false;
+
 		return;
 	}
 
@@ -601,82 +636,131 @@ void Game::loadGame()
 }
 
 
+void Game::customGame()
+{
+	std::wstring col_type_loc;
+	Point location;
+	_logMessage = EnteringCustomString;
+
+	// deleting existing game data to customize new game
+	clearData();
+
+	// main block
+	while (true) {
+		drawGameField();
+		std::getline(std::wcin, col_type_loc);
+
+		// Cheking "QUIT", "DONE" commands
+		if (col_type_loc[0] == L'Q') {
+			newGame();
+
+			return;
+		}
+		else if (col_type_loc[0] == L'D') {
+			// setting side to make move
+			_logMessage = EnteringCustomString + ChooseSideToMoveString;
+			while (true) {
+				drawGameField();
+				std::getline(std::wcin, col_type_loc);
+
+				if (col_type_loc[0] == static_cast<wchar_t>(Color::WHITE)) {
+					_halfTurn = 0;
+
+					break;
+				}
+				else if (col_type_loc[0] == static_cast<wchar_t>(Color::BLACK)) {
+					_halfTurn = 1;
+
+					break;
+				}
+			}
+			_logMessage = NewCustomGameString;
+
+			return;
+		}
+
+		// checking parameters for Move instruction, at least 5 symbols are required, e.g. "A2-A4", "B7 B4 "
+		if (col_type_loc.size() < 4) {
+			_logMessage = EnteringCustomString + ErrorDataCustomString;
+
+			continue;
+		}
+
+		parseFigureDataString(col_type_loc);
+	}
+
+}
+
+
 void Game::mainLogic(Point currentPosition, Point newPosition)
 {
 	// identifying entered position with figures' positions on the board  
-	Figure* figureToMove = nullptr;
+	Figure* figureToMove = _board[currentPosition.x][currentPosition.y];
 	
-	for (auto figure : *_currentArmy) {
-		Point figurePosition = figure->getLocation();
-
-		if (figurePosition == currentPosition) {
-			figureToMove = figure;
-		}
-	}
-
 	if (!figureToMove) {
 		_moveCompleted = false;
-		
 		_logMessage = ErrorInvalidPos3 + _command.substr(0, 2) + L'\n';
+
 		return;
 	}
 
-	//castling checking, execution if needed
-	if (figureToMove->_firstMove) {
-		if (figureToMove->getType() == Type::KING) {
-			if (newPosition == Point{ figureToMove->getLocation().x, 2 } ||
-				newPosition == Point{ figureToMove->getLocation().x, 6 }) {
-				bool moveIsLegal = castling(figureToMove, currentPosition, newPosition);
-				
-				if (!moveIsLegal) {
-					_moveCompleted = false;
-					_logMessage = ErrorCastlingString + _command.substr(0, 5) + L'\n';
-					return;
-				}
-				else {
-					// deleting data for En passant
-					_enPassantFigure = nullptr;
-					_firstEnPassantPoint = Point{ BOARD_SIZE, BOARD_SIZE }; // setting point out of the board
+	//castling checking, execution if true
+	if (castling(figureToMove, currentPosition, newPosition)) {
+		// king movement
+		_board[currentPosition.x][currentPosition.y] = nullptr;
+		_board[newPosition.x][newPosition.y] = figureToMove;
+		figureToMove->setLocation(newPosition);
+		figureToMove->_firstMove = false;
 
-					_moveCompleted = true;
-					_logMessage = CastlingPerfomed + _command.substr(0, 5) + L'\n';
-					return;
-				}
-			}
-			
+		// rook movement
+		Point rookPosition;
+		Point rookNewPosition;
+		if (newPosition.y > currentPosition.y) {
+			rookPosition = Point{ currentPosition.x, BOARD_SIZE - 1 };
+			rookNewPosition = Point{ currentPosition.x, newPosition.y - 1 };
 		}
+		else {
+			rookPosition = Point{ currentPosition.x, 0 };
+			rookNewPosition = Point{ currentPosition.x, newPosition.y + 1 };
+		}
+		Figure* rook = _board[rookPosition.x][rookPosition.y];
+
+		_board[rookPosition.x][rookPosition.y] = nullptr;
+		_board[rookNewPosition.x][rookNewPosition.y] = rook;
+		rook->setLocation(rookNewPosition);
+		rook->_firstMove = false;
+
+		// deleting data for En passant
+		_enPassantFigure = nullptr;
+		_firstEnPassantPoint = Point{ BOARD_SIZE, BOARD_SIZE }; // setting point out of the board
+
+		_logMessage = CastlingPerfomed + _command.substr(0, 5) + L'\n';
+		_moveCompleted = true;
+
+		return;
 	}
 
-	//en passant checking, execution if needed
-	if (figureToMove->getType() == Type::PAWN && _enPassantFigure) {
-		if (newPosition == _firstEnPassantPoint) {
-			if (enPassant(figureToMove, currentPosition, newPosition)) {
-				Point secondEnPassantPoint = _enPassantFigure->getLocation();
-
-				_enemyArmy->erase(_enPassantFigure);
-				_board[currentPosition.x][currentPosition.y] = nullptr;
-				_board[secondEnPassantPoint.x][secondEnPassantPoint.y] = nullptr;
-				_board[newPosition.x][newPosition.y] = figureToMove;
-				figureToMove->setLocation(newPosition);
-
-				// deleting data for En passant
-				_enPassantFigure = nullptr;
-				_firstEnPassantPoint = Point{ BOARD_SIZE, BOARD_SIZE }; // setting point out of the board
-				_logMessage = enPassantPerformedString + _command.substr(0, 5) + L'\n';
-				_moveCompleted = true;
-
-				return;
-			}
-			else {
-				_logMessage = ErrorenPassantString + _command.substr(0, 5) + L'\n';
-				_moveCompleted = false;
-
-				return;
-			}
-		}
-	}
 	
+	// en passant checking, execution if true
+	if (enPassant(figureToMove, currentPosition, newPosition)) {
+		Point secondEnPassantPoint = _enPassantFigure->getLocation();
 
+		deletingFigure(_enPassantFigure);
+		_board[currentPosition.x][currentPosition.y] = nullptr;
+		_board[secondEnPassantPoint.x][secondEnPassantPoint.y] = nullptr;
+		_board[newPosition.x][newPosition.y] = figureToMove;
+		figureToMove->setLocation(newPosition);
+
+		// deleting data for En passant
+		_enPassantFigure = nullptr;
+		_firstEnPassantPoint = Point{ BOARD_SIZE, BOARD_SIZE }; // setting point out of the board
+
+		_logMessage = enPassantPerformedString + _command.substr(0, 5) + L'\n';
+		_moveCompleted = true;
+
+		return;
+	}
+		
 	// checking if figureToMove can execute command
 	bool moveIsLegal = false;
 	auto v_possibleMoves = figureToMove->getPossibleMoves(_board);
@@ -748,77 +832,43 @@ void Game::mainLogic(Point currentPosition, Point newPosition)
 
 bool Game::castling(Figure* king, Point currentPosition, Point newPosition)
 {
-	if (!_CHECK) {
-		// cheking right rook
-		if (newPosition.y > currentPosition.y) {
-			Figure* rook = _board[newPosition.x][BOARD_SIZE - 1];
+	if ((king->getType() == Type::KING) && !_CHECK) {
+		if (king->_firstMove) {
+			if (newPosition == Point{ king->getLocation().x, 2 } || 
+				newPosition == Point{ king->getLocation().x, 6 }) {
+				
+				// cheking if squares king has to move are empty
+				int delta = (newPosition.y - currentPosition.y) / 2;
+				Point square1{ currentPosition.x, currentPosition.y + delta };
+				Point square2{ currentPosition.x, currentPosition.y + delta + delta};
+				if (!_board[currentPosition.x][square1.y] && !_board[currentPosition.x][square2.y]) {
+					
+					// cheking if squares king to move are not under attack
+					if (!isKingInDanger(king, currentPosition, square1) && !isKingInDanger(king, currentPosition, square2)) {
+						
+						// choosing kingside or queenside rook
+						Figure* rook = nullptr;
+						if (delta > 0) {
+							rook = _board[currentPosition.x][BOARD_SIZE - 1];
+						}
+						else {
+							rook = _board[currentPosition.x][0];
+							// cheking if square queenside rook has to move is empty
+							if (_board[currentPosition.x][1]) {
+								return false;
+							}
+						}
 
-			if (rook && rook->getType() == Type::ROOK && rook->_firstMove) {
-				// cheking squares between king and rook
-				for (int i = currentPosition.y + 1; i <= newPosition.y; ++i) {
-					if (_board[currentPosition.x][i] || isKingInDanger(king, currentPosition, Point{ currentPosition.x, i })) {
-						return false;
+						// cheking rook
+						if (rook && rook->getType() == Type::ROOK && rook->_firstMove) {
+							return true;
+						}
 					}
 				}
-				// executing castling
-
-				//// king movement
-				_board[currentPosition.x][currentPosition.y] = nullptr;
-				_board[newPosition.x][newPosition.y] = king;
-				king->setLocation(newPosition);
-
-				king->_firstMove = false;
-
-				//// rook movement
-				Point rookPosition = rook->getLocation();
-
-				_board[rookPosition.x][rookPosition.y] = nullptr;
-				rookPosition.y = newPosition.y - 1;
-				_board[rookPosition.x][rookPosition.y] = rook;
-				rook->setLocation(rookPosition);
-
-				rook->_firstMove = false;
 			}
 		}
-		else {
-			// cheking left rook
-			Figure* rook = _board[newPosition.x][0];
-
-			if (rook && rook->getType() == Type::ROOK && rook->_firstMove) {
-				// cheking squares between king and rook
-				for (int i = currentPosition.y - 1; i > 0; --i) {
-					if (_board[currentPosition.x][i]) {
-						return false;
-					}
-				}
-				for (int i = currentPosition.y - 1; i > 1; --i) {
-					if (isKingInDanger(king, currentPosition, Point{ currentPosition.x, i })) {
-						return false;
-					}
-				}
-				// executing castling
-
-				//// king movement
-				_board[currentPosition.x][currentPosition.y] = nullptr;
-				_board[newPosition.x][newPosition.y] = king;
-				king->setLocation(newPosition);
-
-				king->_firstMove = false;
-
-				//// rook movement
-				Point rookPosition = rook->getLocation();
-
-				_board[rookPosition.x][rookPosition.y] = nullptr;
-				rookPosition.y = newPosition.y + 1;
-				_board[rookPosition.x][rookPosition.y] = rook;
-				rook->setLocation(rookPosition);
-
-				rook->_firstMove = false;
-			}
-		}
-		return true;
 	}
-
+	
 	return false;
 }
 
@@ -826,28 +876,32 @@ bool Game::castling(Figure* king, Point currentPosition, Point newPosition)
 bool Game::enPassant(Figure* figureToMove, Point currentPosition, Point newPosition)
 {
 	bool moveIsPossible = false;
-	// location of the pawn, that just made en Passant
-	Point secondEnPassantPoint = _enPassantFigure->getLocation();
-	int delta = currentPosition.y - secondEnPassantPoint.y;
+	
+	if (figureToMove->getType() == Type::PAWN && _enPassantFigure) {
+		if (newPosition == _firstEnPassantPoint) {
+			// location of the pawn, that just made two-squares move
+			Point secondEnPassantPoint = _enPassantFigure->getLocation();
+			int delta = currentPosition.y - secondEnPassantPoint.y;
 
-	if (currentPosition.x == secondEnPassantPoint.x && (delta == 1 || delta == -1)) { 
-		// setting board as if move's been executed
-		_enemyArmy->erase(_enPassantFigure);
-		_board[currentPosition.x][currentPosition.y] = nullptr;
-		_board[secondEnPassantPoint.x][secondEnPassantPoint.y] = nullptr;
-		_board[newPosition.x][newPosition.y] = figureToMove;
-		figureToMove->setLocation(newPosition);
+			if (currentPosition.x == secondEnPassantPoint.x && (delta == 1 || delta == -1)) {
+				// setting board as if move's been executed
+				_enemyArmy->erase(_enPassantFigure);
+				_board[currentPosition.x][currentPosition.y] = nullptr;
+				_board[secondEnPassantPoint.x][secondEnPassantPoint.y] = nullptr;
+				_board[newPosition.x][newPosition.y] = figureToMove;
+				figureToMove->setLocation(newPosition);
 
-		// checking for "check"
-		moveIsPossible = !isCheck();
+				// checking for "check"
+				moveIsPossible = !isCheck();
 
-		// setting board to previous position
-		_board[currentPosition.x][currentPosition.y] = figureToMove;
-		_board[secondEnPassantPoint.x][secondEnPassantPoint.y] = _enPassantFigure;
-		_board[newPosition.x][newPosition.y] = nullptr;
-		figureToMove->setLocation(currentPosition);
-
-		_enemyArmy->insert(_enPassantFigure);
+				// setting board to previous position
+				_enemyArmy->insert(_enPassantFigure);
+				_board[currentPosition.x][currentPosition.y] = figureToMove;
+				_board[secondEnPassantPoint.x][secondEnPassantPoint.y] = _enPassantFigure;
+				_board[newPosition.x][newPosition.y] = nullptr;
+				figureToMove->setLocation(currentPosition);
+			}
+		}
 	}
 	
 	return moveIsPossible;
@@ -857,10 +911,10 @@ bool Game::enPassant(Figure* figureToMove, Point currentPosition, Point newPosit
 bool Game::isKingInDanger(Figure* figureToMove, Point currentPosition, Point newPosition)
 {
 	Figure* enemyFigure = _board[newPosition.x][newPosition.y];
-
 	if (enemyFigure) {
 		_enemyArmy->erase(enemyFigure);
 	}
+
 	// setting board as if move's been executed
 	_board[currentPosition.x][currentPosition.y] = nullptr;
 	_board[newPosition.x][newPosition.y] = figureToMove;
@@ -888,67 +942,50 @@ void Game::promotion(Figure* figureToMove, Point newPosition)
 	Color color = figureToMove->getColor();
 	std::wstring figureType;
 	Figure* promotedFigure = nullptr;
-
 	std::bitset<BOARD_SIZE>* bit_currentArmy;
-	if (_halfTurn % 2) {
-		bit_currentArmy = &_bit_whiteArmy;
-	}
-	else {
-		bit_currentArmy = &_bit_blackArmy;
-	}
-
+	bit_currentArmy = (_halfTurn % 2) ? &_bit_whiteArmy : &_bit_blackArmy;
+	
 	_logMessage = ChoosePromotionString;
 
-	for (; ;) {
+	while (true) {
 		drawGameField();
 		std::wcout << ENTER_COMMAND_STRING;
+
 		std::getline(std::wcin, figureType);
 
 		if (figureType[0] == static_cast<wchar_t>(Type::QUEEN)) {
 			promotedFigure = new F_Queen(color, newPosition);
 
-			if (bit_currentArmy->test(bit_F_Queen1)) {
-				bit_currentArmy->set(bit_F_Queen2);
-			}
-			else {
-				bit_currentArmy->set(bit_F_Queen1);
-			}
+			(bit_currentArmy->test(bit_F_Queen1)) ? 
+				bit_currentArmy->set(bit_F_Queen2) : bit_currentArmy->set(bit_F_Queen1);
 
 			break;
 		}
 		else if (figureType[0] == static_cast<wchar_t>(Type::BISHOP)) {
 			promotedFigure = new F_Bishop(color, newPosition);
 
-			if ((newPosition.x + newPosition.y) % 2) {
-				bit_currentArmy->set(bit_F_Bishop1);
-			}
-			else {
-				bit_currentArmy->set(bit_F_Bishop2);
-			}
+			((newPosition.x + newPosition.y) % 2) ?
+				bit_currentArmy->set(bit_F_Bishop1) : bit_currentArmy->set(bit_F_Bishop2);
+
 			break;
 		}
 		else if (figureType[0] == static_cast<wchar_t>(Type::KNIGHT)) {
 			promotedFigure = new F_Knight(color, newPosition);
 
-			if (bit_currentArmy->test(bit_F_Knight1)) {
-				bit_currentArmy->set(bit_F_Knight2);
-			}
-			else {
-				bit_currentArmy->set(bit_F_Knight1);
-			}
+			(bit_currentArmy->test(bit_F_Knight1)) ?
+				bit_currentArmy->set(bit_F_Knight2) : bit_currentArmy->set(bit_F_Knight1);
+
 			break;
 		}
 		else if (figureType[0] == static_cast<wchar_t>(Type::ROOK)) {
 			promotedFigure = new F_Rook(color, newPosition);
 
-			if (bit_currentArmy->test(bit_F_Rook1)) {
-				bit_currentArmy->set(bit_F_Rook2);
-			}
-			else {
-				bit_currentArmy->set(bit_F_Rook1);
-			}
+			(bit_currentArmy->test(bit_F_Rook1)) ?
+				bit_currentArmy->set(bit_F_Rook2) : bit_currentArmy->set(bit_F_Rook1);
+			
 			break;
 		}
+
 		_logMessage = ErrorPromotionType1 + figureType[0] + ErrorPromotionType2;
 	}
 
@@ -967,111 +1004,51 @@ void Game::promotion(Figure* figureToMove, Point newPosition)
 
 void Game::deletingFigure(Figure* enemyFigure)
 {
-	_enemyArmy->erase(enemyFigure);
 	Type type = enemyFigure->getType();
 	Point location = enemyFigure->getLocation();
-	
 	std::bitset<BOARD_SIZE>* bit_enemyArmy;
-	if (_halfTurn % 2) {
-		bit_enemyArmy = &_bit_blackArmy;
-	}
-	else {
-		bit_enemyArmy = &_bit_whiteArmy;
-	}
 
+	bit_enemyArmy = (_halfTurn % 2) ?
+		 &_bit_blackArmy : bit_enemyArmy = &_bit_whiteArmy;
+	
 	// updating bitset considering type of deleted figure
 	switch (type) {
+
 		case Type::QUEEN:
-			if (bit_enemyArmy->test(bit_F_Queen2)) {
-				bit_enemyArmy->reset(bit_F_Queen2);
-			}
-			else {
-				bit_enemyArmy->reset(bit_F_Queen1);
-			}
+			(bit_enemyArmy->test(bit_F_Queen2)) ?
+				bit_enemyArmy->reset(bit_F_Queen2) : bit_enemyArmy->reset(bit_F_Queen1);
+			
 			break;
+
 		case Type::BISHOP:
-			if ((location.x + location.y) % 2) {
-				bit_enemyArmy->reset(bit_F_Bishop1);
-			}
-			else {
-				bit_enemyArmy->reset(bit_F_Bishop2);
-			}
+			((location.x + location.y) % 2) ?
+				bit_enemyArmy->reset(bit_F_Bishop1) : bit_enemyArmy->reset(bit_F_Bishop2);
+			
 			break;
+
 		case Type::KNIGHT:
-			if (bit_enemyArmy->test(bit_F_Knight2)) {
-				bit_enemyArmy->reset(bit_F_Knight2);
-			}
-			else {
-				bit_enemyArmy->reset(bit_F_Knight1);
-			}
+			(bit_enemyArmy->test(bit_F_Knight2)) ?
+				bit_enemyArmy->reset(bit_F_Knight2) : bit_enemyArmy->reset(bit_F_Knight1);
+			
 			break;
+
 		case Type::ROOK:
-			if (bit_enemyArmy->test(bit_F_Rook2)) {
-				bit_enemyArmy->reset(bit_F_Rook2);
-			}
-			else {
-				bit_enemyArmy->reset(bit_F_Rook1);
-			}
+			(bit_enemyArmy->test(bit_F_Rook2)) ?
+				bit_enemyArmy->reset(bit_F_Rook2) : bit_enemyArmy->reset(bit_F_Rook1);
+			
 			break;
+
 		case Type::PAWN:
 			_pawnQuantity -= 1;
+
 			break;
+
 		default:
 			break;
 	}
 	
+	_enemyArmy->erase(enemyFigure);
 	delete enemyFigure;
-}
-
-
-void Game::customGame()
-{
-	// deleting existing game data to customize new game
-	clearData();
-
-	// local variables
-	std::wstring col_type_loc;
-	Point location;
-	_logMessage = EnteringCustomString;
-
-	// main block
-	while (true) {
-		drawGameField();
-		std::getline(std::wcin, col_type_loc);
-
-		// Cheking "QUIT", "DONE" commands
-		if (col_type_loc[0] == L'Q') {
-			newGame();
-			return;
-		}
-		else if (col_type_loc[0] == L'D') {
-			// setting side to make move
-			_logMessage = EnteringCustomString + ChooseSideToMoveString;
-			while (true) {
-				drawGameField();
-				std::getline(std::wcin, col_type_loc);
-				if (col_type_loc[0] == static_cast<wchar_t>(Color::WHITE)) {
-					_halfTurn = 0;
-					break;
-				}
-				else if (col_type_loc[0] == static_cast<wchar_t>(Color::BLACK)) {
-					_halfTurn = 1;
-					break;
-				}
-			}
-			_logMessage = NewCustomGameString;
-			return;
-		}
-
-		// checking parameters for Move instruction, at least 5 symbols are required, e.g. "A2-A4", "B7 B4 "
-		if (col_type_loc.size() < 4) {
-			_logMessage = EnteringCustomString + ErrorDataCustomString;
-			continue;
-		}
-
-		parseFigureDataString(col_type_loc);
-	}
-		
 }
 
 
@@ -1119,7 +1096,7 @@ void Game::parseFigureDataString(std::wstring col_type_loc)
 			firstCoord = true;
 		}
 
-		if (col_type_loc[3] == static_cast<wchar_t>(i + 49)) {
+		if (col_type_loc[3] == static_cast<wchar_t>(i + L'1')) {
 			location.x = maxXCoord - i;
 			secondCoord = true;
 		}
@@ -1143,69 +1120,61 @@ void Game::parseFigureDataString(std::wstring col_type_loc)
 
 		//setting type, creating new figure, adding figure to white army and setting army's bitset
 		switch (col_type_loc[1]) {
+
 			case static_cast<wchar_t>(Type::KING) :
 				newFigure = new F_King(color, location);
 				_whiteArmy->insert(newFigure);
 				_WKing = newFigure;
+
 				break;
 					
 			case static_cast<wchar_t>(Type::QUEEN) :
 				newFigure = new F_Queen(color, location);
 				_whiteArmy->insert(newFigure);
 
-				if (_bit_whiteArmy.test(bit_F_Queen1)) {
-					_bit_whiteArmy.set(bit_F_Queen2);
-				}
-				else {
-					_bit_whiteArmy.set(bit_F_Queen1);
-				}
+				(_bit_whiteArmy.test(bit_F_Queen1)) ? 
+					_bit_whiteArmy.set(bit_F_Queen2) : _bit_whiteArmy.set(bit_F_Queen1);
+
 				break;
 
 			case static_cast<wchar_t>(Type::BISHOP) :
 				newFigure = new F_Bishop(color, location);
 				_whiteArmy->insert(newFigure);
 
-				if ((location.x + location.y) % 2) {
-					_bit_whiteArmy.set(bit_F_Bishop1);
-				}
-				else {
-					_bit_whiteArmy.set(bit_F_Bishop2);
-				}
+				((location.x + location.y) % 2) ?
+					_bit_whiteArmy.set(bit_F_Bishop1) : _bit_whiteArmy.set(bit_F_Bishop2);
+
 				break;
 
 			case static_cast<wchar_t>(Type::KNIGHT) :
 				newFigure = new F_Knight(color, location);
 				_whiteArmy->insert(newFigure);
 
-				if (_bit_whiteArmy.test(bit_F_Knight1)) {
-					_bit_whiteArmy.set(bit_F_Knight2);
-				}
-				else {
-					_bit_whiteArmy.set(bit_F_Knight1);
-				}
+				(_bit_whiteArmy.test(bit_F_Knight1)) ?
+					_bit_whiteArmy.set(bit_F_Knight2) : _bit_whiteArmy.set(bit_F_Knight1);
+
 				break;
 
 			case static_cast<wchar_t>(Type::ROOK) :
 				newFigure = new F_Rook(color, location);
 				_whiteArmy->insert(newFigure);
 
-				if (_bit_whiteArmy.test(bit_F_Rook1)) {
-					_bit_whiteArmy.set(bit_F_Rook2);
-					}
-				else {
-					_bit_whiteArmy.set(bit_F_Rook1);
-				}
+				(_bit_whiteArmy.test(bit_F_Rook1)) ?
+					_bit_whiteArmy.set(bit_F_Rook2) : _bit_whiteArmy.set(bit_F_Rook1);
+				
 				break;
 
 			case static_cast<wchar_t>(Type::PAWN) :
 				newFigure = new F_Pawn(color, location);
 				_whiteArmy->insert(newFigure);
 				_pawnQuantity += 1;
+
 				break;
 
 			default:
 				_logMessage = EnteringCustomString + ErrorTypeCustomString +
 					col_type_loc.substr(0, 2) + L'\n';
+
 				return;
 		}
 
@@ -1218,6 +1187,7 @@ void Game::parseFigureDataString(std::wstring col_type_loc)
 
 		_logMessage = EnteringCustomString + FigureIsPlacedString +
 			col_type_loc.substr(0, 4) + L'\n';
+
 		return;
 	}
 	else if (col_type_loc[0] == static_cast<wchar_t>(Color::BLACK)) {
@@ -1225,69 +1195,61 @@ void Game::parseFigureDataString(std::wstring col_type_loc)
 
 		//setting type, creating new figure, adding figure to black army and setting army's bitset
 		switch (col_type_loc[1]) {
+
 			case static_cast<wchar_t>(Type::KING) :
 				newFigure = new F_King(color, location);
 				_blackArmy->insert(newFigure);
 				_BKing = newFigure;
+
 				break;
 					
 			case static_cast<wchar_t>(Type::QUEEN) :
 				newFigure = new F_Queen(color, location);
 				_blackArmy->insert(newFigure);
 
-				if (_bit_blackArmy.test(bit_F_Queen1)) {
-					_bit_blackArmy.set(bit_F_Queen2);
-				}
-				else {
-					_bit_blackArmy.set(bit_F_Queen1);
-				}
+				(_bit_blackArmy.test(bit_F_Queen1)) ? 
+					_bit_blackArmy.set(bit_F_Queen2) : _bit_blackArmy.set(bit_F_Queen1);
+				
 				break;
 
 			case static_cast<wchar_t>(Type::BISHOP) :
 				newFigure = new F_Bishop(color, location);
 				_blackArmy->insert(newFigure);
 
-				if ((location.x + location.y) % 2) {
-					_bit_blackArmy.set(bit_F_Bishop1);
-				}
-				else {
-					_bit_blackArmy.set(bit_F_Bishop2);
-				}
+				((location.x + location.y) % 2) ?
+					_bit_blackArmy.set(bit_F_Bishop1) : _bit_blackArmy.set(bit_F_Bishop2);
+				
 				break;
 
 			case static_cast<wchar_t>(Type::KNIGHT) :
 				newFigure = new F_Knight(color, location);
 				_blackArmy->insert(newFigure);
 
-				if (_bit_blackArmy.test(bit_F_Knight1)) {
-					_bit_blackArmy.set(bit_F_Knight2);
-				}
-				else {
-					_bit_blackArmy.set(bit_F_Knight1);
-				}
+				(_bit_blackArmy.test(bit_F_Knight1)) ?
+					_bit_blackArmy.set(bit_F_Knight2) : _bit_blackArmy.set(bit_F_Knight1);
+				
 				break;
 
 			case static_cast<wchar_t>(Type::ROOK) :
 				newFigure = new F_Rook(color, location);
 				_blackArmy->insert(newFigure);
 
-				if (_bit_blackArmy.test(bit_F_Rook1)) {
-					_bit_blackArmy.set(bit_F_Rook2);
-				}
-				else {
-					_bit_blackArmy.set(bit_F_Rook1);
-				}
+				(_bit_blackArmy.test(bit_F_Rook1)) ?
+					_bit_blackArmy.set(bit_F_Rook2) : _bit_blackArmy.set(bit_F_Rook1);
+				
 				break;
 
 			case static_cast<wchar_t>(Type::PAWN) :
 				newFigure = new F_Pawn(color, location);
 				_blackArmy->insert(newFigure);
 				_pawnQuantity += 1;
+
 				break;
 
 			default:
 				_logMessage = EnteringCustomString + ErrorTypeCustomString +
 					col_type_loc.substr(0, 2) + L'\n';
+
 				break;
 		}
 
@@ -1300,162 +1262,40 @@ void Game::parseFigureDataString(std::wstring col_type_loc)
 
 		_logMessage = EnteringCustomString + FigureIsPlacedString +
 			col_type_loc.substr(0, 4) + L'\n';
+
 		return;
 	}
 	else {
 		_logMessage = EnteringCustomString + ErrorColorCustomString +
 		col_type_loc.substr(0, 2) + L'\n';
+
 		return;
 	}
 }
 
 
-void Game::gameLoop()
-{
-	while (!_gameOver) {
-		_halfTurn += 1;
-
-		// updating pointers for quick access
-		if (_halfTurn % 2) {
-			_currentArmy = _whiteArmy;
-			_enemyArmy = _blackArmy;
-			_activeKing = _WKing;
-		}
-		else {
-			_currentArmy = _blackArmy;
-			_enemyArmy = _whiteArmy;
-			_activeKing = _BKing;
-		}
-
-		if (isCheck()) {
-			_CHECK = true;
-			if (isCheckmate()) {
-				_gameOver = true;
-				_moveCompleted = true;
-			}
-		}
-		else if (isDraw()) {
-			_gameOver = true;
-			_moveCompleted = true;
-		}
-
-		while (!_moveCompleted) {
-			drawGameField();
-			input();
-		}
-
-		_moveCompleted = false;
-		
-	}
-
-	drawGameField();
-}
-
-
-// getters for testing
-
-const Figure* Game::getBoard(Point point) const
-{
-	return _board[point.x][point.y];
-}
-
-const std::unordered_set<Figure*>* Game::getWhiteArmy() const
-{
-	return _whiteArmy;
-}
-
-const std::unordered_set<Figure*>* Game::getBlackArmy() const
-{
-	return _blackArmy;
-}
-
-const std::bitset<BOARD_SIZE>& Game::getWArmyBit() const
-{
-	return _bit_whiteArmy;
-}
-
-const std::bitset<BOARD_SIZE>& Game::getBArmyBit() const
-{
-	return _bit_blackArmy;
-}
-
-const std::unordered_set<Figure*>* Game::getCurrentArmy() const
-{
-	return _currentArmy;
-}
-
-const std::unordered_set<Figure*>* Game::getEnemyArmy() const
-{
-	return _enemyArmy;
-}
-
-const Figure* Game::getEnPassantFigure() const
-{
-	return _enPassantFigure;
-}
-
-const Point Game::getFirstEnPassantPoint() const
-{
-	return _firstEnPassantPoint;
-}
-
-const int Game::getHalfTurn() const
-{
-	return _halfTurn;
-}
-
-const bool Game::getCHECKStatus() const
-{
-	return _CHECK;
-}
-
-const bool Game::getGameOverStatus() const
-{
-	return _gameOver;
-}
-
-const bool Game::getMoveCompletedStatus() const
-{
-	return _moveCompleted;
-}
-
-const std::wstring& Game::getCurrentCommand() const
-{
-	return _command;
-}
-
-const std::wstring& Game::getLogMessage() const
-{
-	return _logMessage;
-}
-
-
-// create new custom Game from string, for testing
-
-void Game::loadGameDataString(std::wstring dataString)
+void Game::loadGameDataString(std::wstring dataString) // create new custom Game from string, for testing
 {
 	std::wistringstream load(dataString);
-	
+
 	// deleting existing game data to load saved game
 	clearData();
 
 	// loading _halfTurn
 	load >> _halfTurn;
-	//_halfTurn -= 1;
-
+	
 	// loading "en passant" actions 
-	//// location of the pawn, that just made en Passant
+	//// location of the pawn, that just made two squares move
 	Point secondEnPassantPoint;
 	load >> secondEnPassantPoint.x >> secondEnPassantPoint.y;
 	//// _firstEnPassantPoint - square that was skipped by the pawn
 	load >> _firstEnPassantPoint.x >> _firstEnPassantPoint.y;
-	//load.get();
+	
 	//parsing strings into figure's data
 	std::wstring col_type_loc;
 
 	while (load) {
 		load >> col_type_loc;
-		//std::getline(load, col_type_loc);
 		parseFigureDataString(col_type_loc);
 	}
 
@@ -1471,13 +1311,80 @@ void Game::loadGameDataString(std::wstring dataString)
 		_activeKing = _BKing;
 	}
 
-	//// setting pointer to figure, that has just made en Passant (or nullprt)
-	if (secondEnPassantPoint != Point{ BOARD_SIZE, BOARD_SIZE }) {
-		_enPassantFigure = _board[secondEnPassantPoint.x][secondEnPassantPoint.y];
-	}
-	else {
-		_enPassantFigure = nullptr;
-	}
-	
-	_moveCompleted = true;
+	//// setting pointer to the pawn, that has just made two-squares move (or nullprt)
+	_enPassantFigure = (secondEnPassantPoint != Point{ BOARD_SIZE, BOARD_SIZE }) ?
+		_board[secondEnPassantPoint.x][secondEnPassantPoint.y] : nullptr;
+
+	_CHECK = isCheck();
+}
+
+
+// getters for testing
+
+Figure* Game::getBoard(Point point) const {
+	return _board[point.x][point.y];
+}
+
+const std::unordered_set<Figure*>* Game::getWhiteArmy() const {
+	return _whiteArmy;
+}
+
+const std::unordered_set<Figure*>* Game::getBlackArmy() const {
+	return _blackArmy;
+}
+
+Figure* Game::getActiveKing() const {
+	return _activeKing;
+}
+
+const std::bitset<BOARD_SIZE>& Game::getWArmyBit() const {
+	return _bit_whiteArmy;
+}
+
+const std::bitset<BOARD_SIZE>& Game::getBArmyBit() const {
+	return _bit_blackArmy;
+}
+
+const int Game::getPawnQuantity() const {
+	return _pawnQuantity;
+}
+
+const std::unordered_set<Figure*>* Game::getCurrentArmy() const {
+	return _currentArmy;
+}
+
+const std::unordered_set<Figure*>* Game::getEnemyArmy() const {
+	return _enemyArmy;
+}
+
+const Figure* Game::getEnPassantFigure() const {
+	return _enPassantFigure;
+}
+
+const Point Game::getFirstEnPassantPoint() const {
+	return _firstEnPassantPoint;
+}
+
+const int Game::getHalfTurn() const {
+	return _halfTurn;
+}
+
+const bool Game::getCHECKStatus() const {
+	return _CHECK;
+}
+
+const bool Game::getGameOverStatus() const {
+	return _gameOver;
+}
+
+const bool Game::getMoveCompletedStatus() const {
+	return _moveCompleted;
+}
+
+const std::wstring& Game::getCurrentCommand() const {
+	return _command;
+}
+
+const std::wstring& Game::getLogMessage() const {
+	return _logMessage;
 }

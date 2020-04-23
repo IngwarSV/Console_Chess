@@ -40,13 +40,13 @@ private:
 
 	int _pawnQuantity; //pawns quantity (for draw calculatings)
 
-	//// pointers for kings for quick access
+	//// pointers on kings for quick access
 	Figure* _WKing;
 	Figure* _BKing;
 	Figure* _activeKing;
 
 	// for "en passant" actions 
-	Figure* _enPassantFigure; // pawn that just made en Passant
+	Figure* _enPassantFigure; // pawn that just made two-squares move
 	Point _firstEnPassantPoint; // square that was skipped
 
 	int _halfTurn; // game turns: halfTurn * 2
@@ -62,8 +62,6 @@ private:
 
 	void drawGameField();
 
-	////logicBlock2:
-
 	void input(); // handling instructions
 
 	void newGame();
@@ -72,36 +70,17 @@ private:
 
 	void loadGame();
 
-	////logicBlock3:
-
-	void mainLogic(Point currentPosition, Point newPosition);
-
-	bool castling(Figure* king, Point currentPosition, Point newPosition);
-
-	bool enPassant(Figure* figureToMove, Point currentPosition, Point newPosition);
-
-	//// checking if move cause CHECK for the king
-	bool isKingInDanger(Figure* figureToMove, Point currentPosition, Point newPosition);
-
-	void promotion(Figure* figureToMove, Point newPosition);
-
-	void deletingFigure(Figure* enemyFigure);
-
 	void customGame(); // create new Game with certain positions of figures
-
-	void clearData(); // deleting existing game data to load saved game / customize new game
-
-	void parseFigureDataString(std::wstring col_type_loc); //parsing string into figure's data
-
 
 public:
 	Game();
+
 	~Game();
 
 	// methods
 	void gameLoop();
-
-	////logicBlock1:
+	
+	//// logicBlock1:
 
 	bool isCheck();
 
@@ -109,29 +88,36 @@ public:
 
 	bool isDraw();
 
+	////logicBlock2:
 
+	void mainLogic(Point currentPosition, Point newPosition);
 
+	bool castling(Figure* king, Point currentPosition, Point newPosition);
 
+	bool enPassant(Figure* figureToMove, Point currentPosition, Point newPosition);
 
+	bool isKingInDanger(Figure* figureToMove, Point currentPosition, Point newPosition);
 
+	void promotion(Figure* figureToMove, Point newPosition);
 
+	void deletingFigure(Figure* enemyFigure);
 
+	void clearData(); // deleting existing game data to load saved game / customize new game
 
+	void parseFigureDataString(std::wstring col_type_loc); //parsing string into figure's data
 
+	//Testing:
+	//// creating new custom Game from string
+	void loadGameDataString(std::wstring dataString); 
 
-
-
-
-
-
-
-
-	// getters for testing
-	const Figure* getBoard(Point point) const;
+	//// getters
+	Figure* getBoard(Point point) const;
 	const std::unordered_set<Figure*>* getWhiteArmy() const;
 	const std::unordered_set<Figure*>* getBlackArmy() const;
+	Figure* getActiveKing() const;
 	const std::bitset<BOARD_SIZE>& getWArmyBit() const;
 	const std::bitset<BOARD_SIZE>& getBArmyBit() const;
+	const int getPawnQuantity() const;
 	const std::unordered_set<Figure*>* getCurrentArmy() const;
 	const std::unordered_set<Figure*>* getEnemyArmy() const;
 	const Figure* getEnPassantFigure() const;
@@ -142,22 +128,5 @@ public:
 	const bool getMoveCompletedStatus() const;
 	const std::wstring& getCurrentCommand() const;
 	const std::wstring& getLogMessage() const;
-
-	// create new custom Game from string, for testing
-	void loadGameDataString(std::wstring dataString);
-
-
-
-
-
-	
-
-
-
-
-
-
-
-
 };
 

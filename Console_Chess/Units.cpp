@@ -133,7 +133,6 @@ std::vector<Point>* F_King::getPossibleMoves(Figure*** board)
 }
 
 
-
 F_Queen::F_Queen(Color color, Point location, Type type) : Figure(color, location, type) {}
 
 F_Queen::~F_Queen() {}
@@ -154,6 +153,7 @@ std::vector<Point>* F_Queen::getPossibleMoves(Figure*** board)
 		}
 		else if (figure->getColor() != this->getColor()) {
 			_possibleMoves->push_back(tempLocation);
+
 			break;
 		}
 		else {
@@ -171,6 +171,7 @@ std::vector<Point>* F_Queen::getPossibleMoves(Figure*** board)
 		}
 		else if (figure->getColor() != this->getColor()) {
 			_possibleMoves->push_back(tempLocation);
+
 			break;
 		}
 		else {
@@ -189,6 +190,7 @@ std::vector<Point>* F_Queen::getPossibleMoves(Figure*** board)
 		}
 		else if (figure->getColor() != this->getColor()) {
 			_possibleMoves->push_back(tempLocation);
+
 			break;
 		}
 		else {
@@ -206,6 +208,7 @@ std::vector<Point>* F_Queen::getPossibleMoves(Figure*** board)
 		}
 		else if (figure->getColor() != this->getColor()) {
 			_possibleMoves->push_back(tempLocation);
+
 			break;
 		}
 		else {
@@ -226,6 +229,7 @@ std::vector<Point>* F_Queen::getPossibleMoves(Figure*** board)
 		}
 		else if (figure->getColor() != this->getColor()) {
 			_possibleMoves->push_back(tempLocation);
+
 			break;
 		}
 		else {
@@ -245,6 +249,7 @@ std::vector<Point>* F_Queen::getPossibleMoves(Figure*** board)
 		}
 		else if (figure->getColor() != this->getColor()) {
 			_possibleMoves->push_back(tempLocation);
+
 			break;
 		}
 		else {
@@ -265,6 +270,7 @@ std::vector<Point>* F_Queen::getPossibleMoves(Figure*** board)
 		}
 		else if (figure->getColor() != this->getColor()) {
 			_possibleMoves->push_back(tempLocation);
+
 			break;
 		}
 		else {
@@ -284,6 +290,7 @@ std::vector<Point>* F_Queen::getPossibleMoves(Figure*** board)
 		}
 		else if (figure->getColor() != this->getColor()) {
 			_possibleMoves->push_back(tempLocation);
+
 			break;
 		}
 		else {
@@ -293,7 +300,6 @@ std::vector<Point>* F_Queen::getPossibleMoves(Figure*** board)
 
 	return _possibleMoves;
 }
-
 
 
 F_Bishop::F_Bishop(Color color, Point location, Type type) : Figure(color, location, type) {}
@@ -318,6 +324,7 @@ std::vector<Point>* F_Bishop::getPossibleMoves(Figure*** board)
 		}
 		else if (figure->getColor() != this->getColor()) {
 			_possibleMoves->push_back(tempLocation);
+
 			break;
 		}
 		else {
@@ -337,6 +344,7 @@ std::vector<Point>* F_Bishop::getPossibleMoves(Figure*** board)
 		}
 		else if (figure->getColor() != this->getColor()) {
 			_possibleMoves->push_back(tempLocation);
+
 			break;
 		}
 		else {
@@ -357,6 +365,7 @@ std::vector<Point>* F_Bishop::getPossibleMoves(Figure*** board)
 		}
 		else if (figure->getColor() != this->getColor()) {
 			_possibleMoves->push_back(tempLocation);
+
 			break;
 		}
 		else {
@@ -376,6 +385,7 @@ std::vector<Point>* F_Bishop::getPossibleMoves(Figure*** board)
 		}
 		else if (figure->getColor() != this->getColor()) {
 			_possibleMoves->push_back(tempLocation);
+
 			break;
 		}
 		else {
@@ -525,7 +535,6 @@ std::vector<Point>* F_Knight::getPossibleMoves(Figure*** board)
 }
 
 
-
 F_Rook::F_Rook(Color color, Point location, Type type) : Figure(color, location, type) {}
 
 F_Rook::~F_Rook() {}
@@ -546,6 +555,7 @@ std::vector<Point>* F_Rook::getPossibleMoves(Figure*** board)
 		} 
 		else if (figure->getColor() != this->getColor()) {
 				_possibleMoves->push_back(tempLocation);
+
 				break;
 		}
 		else {
@@ -563,6 +573,7 @@ std::vector<Point>* F_Rook::getPossibleMoves(Figure*** board)
 		}
 		else if (figure->getColor() != this->getColor()) {
 			_possibleMoves->push_back(tempLocation);
+
 			break;
 		}
 		else {
@@ -581,6 +592,7 @@ std::vector<Point>* F_Rook::getPossibleMoves(Figure*** board)
 		}
 		else if (figure->getColor() != this->getColor()) {
 			_possibleMoves->push_back(tempLocation);
+
 			break;
 		}
 		else {
@@ -598,6 +610,7 @@ std::vector<Point>* F_Rook::getPossibleMoves(Figure*** board)
 		}
 		else if (figure->getColor() != this->getColor()) {
 			_possibleMoves->push_back(tempLocation);
+
 			break;
 		}
 		else {
