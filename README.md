@@ -17,6 +17,7 @@ Implemented:
 	f. promotion (to Queen, Bishop, Knight, Rook).
  4. Saving games (app creates directory Saved Games) with all data (including data for castling, en passant).
  5. Loading saved games (including data for castling, en passant).
- 6. Google tests for game logic.
+ 6. Custom games (creating new Game with certain positions of figures).
+ 7. Google tests for game logic.
 
 IDE: Microsoft Visual Studio 2019 Community edition
